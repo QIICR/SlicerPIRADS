@@ -1,0 +1,46 @@
+@startuml
+
+skinparam monochrome true
+skinparam handwritten true
+left to right direction
+
+actor Reader
+
+rectangle SlicerPIRADS {
+(load case)
+(create case)
+(save case)
+(load case)
+(study level assessment)
+(add finding)
+(lesion assessment)
+(select measurement tool)
+(select ruler)
+(select fiducial)
+(select segmentation)
+}
+
+(add finding) .> (lesion assessment) : include
+(add finding) ..> (select measurement tool) : include
+(select measurement tool) ..> (select ruler) : include
+(select measurement tool) ..> (select fiducial) : include
+(select measurement tool) ..> (select segmentation) : include
+
+
+Reader -- (create case)
+Reader -- (save case)
+Reader -- (load case)
+Reader -- (study level assessment)
+Reader -- (add finding)
+
+'note right of Admin : This is an example.
+
+'note right of (Use)
+'A note can also
+'be on several lines
+'end note
+
+'note "This note is connected\nto several objects." as N2
+'(Start) .. N2
+'N2 .. (Use)
+@enduml
