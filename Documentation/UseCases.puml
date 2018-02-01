@@ -15,16 +15,24 @@ rectangle SlicerPIRADS {
 (add finding)
 (lesion assessment)
 (select measurement tool)
-(select ruler)
-(select fiducial)
-(select segmentation)
+(segmentation)
+(fiducial)
+(ruler)
+(identify lesion)
+(generate report)
+(select layout)
 }
 
+' regarding layouts
+' sometimes not all sequences are available
+' define rules when which layout should be available
+
 (add finding) .> (lesion assessment) : include
-(add finding) ..> (select measurement tool) : include
-(select measurement tool) ..> (select ruler) : include
-(select measurement tool) ..> (select fiducial) : include
-(select measurement tool) ..> (select segmentation) : include
+(add finding) ..> (identify lesion) : include
+(identify lesion) ..> (select measurement tool) : include
+(select measurement tool) <.. (ruler) : extends
+(select measurement tool) <.. (fiducial) : extends
+(select measurement tool) <.. (segmentation) : extends
 
 
 Reader -- (create case)
@@ -32,15 +40,7 @@ Reader -- (save case)
 Reader -- (load case)
 Reader -- (study level assessment)
 Reader -- (add finding)
+Reader -- (generate report)
+Reader -- (select layout)
 
-'note right of Admin : This is an example.
-
-'note right of (Use)
-'A note can also
-'be on several lines
-'end note
-
-'note "This note is connected\nto several objects." as N2
-'(Start) .. N2
-'N2 .. (Use)
 @enduml

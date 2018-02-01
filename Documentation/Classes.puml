@@ -1,0 +1,139 @@
+@startuml
+left to right direction
+
+'TODO: think about loading and saving data!
+
+package SlicerPIRADSWidget {
+
+class MultiVolumeExplorerWidget {
+}
+
+class AssessmentWidget {
+  + setAssessment(): Assessment
+}
+
+AssessmentWidget <|-- StudyAssessmentWidget
+AssessmentWidget <|-- LesionAssessmentWidget
+
+class PatientInfoWidget {
+}
+
+class FindingsWidget {
+  - __findingsTable
+  - __measurementToolWidget
+}
+
+FindingsWidget::__findingsTable ..> FindingsTable: has
+FindingsWidget::__measurementToolWidget ..> MeasurementToolWidget: has
+
+
+class FindingsTable {
+  + createFinding(): Finding
+  + assessLesion():
+}
+
+class MeasurementToolWidget {
+  - __measurementTools: list
+  + addMeasurementTool(MeasurementTool tool)
+  + getMeasurementTools(): list
+  + setActiveMeasurementTool(id): bool
+}
+
+
+}
+
+class AssessmentHelp {
+
+}
+
+SlicerPIRADSWidget ..> Report: has_a
+
+LesionAssessmentWidget ..> AssessmentHelp
+
+LesionAssessmentWidget ..> LesionAssessment:generated_from
+StudyAssessmentWidget ..> StudyAssessment:generated_from
+
+FindingsTable "1" ..> "0..*" Finding:has/creates
+
+
+interface Assessment {
+  - __schema: string
+  - __data=None
+  .. setter ..
+  + loadSchema(fileName)
+  + loadData(string): bool
+  .. getter ..
+  + getSchema(): string
+  + getData(): string
+}
+
+'interface DataHandler {
+'  + save()
+'  + load(fileName): bool
+'}
+'
+'class ReportDataHandler {
+'}
+'DataHandler <|-- ReportDataHandler
+'DataHandler <|-- StudyAssessmentHandler
+'
+'Assessment -> DataHandler: has_a
+
+class LesionAssessment {
+  -lesion: Lesion
+}
+
+class StudyAssessment {
+}
+
+class Report {
+- findings: Finding
+- studyAssessment: StudyAssessment
+__
++ startReport(): bool
++ closeReport(): bool
++ saveReport(): bool
++ loadReport(string jsonfilename): bool
+}
+
+interface Lesion {
+- mrmlNode=None
+- mrmlClass=None
+__
++ setMRMLNode(mrmlNode)
+}
+
+class Fiducial {
+}
+
+class Segmentation {
+}
+
+class Ruler {
+}
+
+MeasurementToolWidget::__measurementTool "1" ..> "1" MeasurementTool: has
+
+interface MeasurementTool {
+  +id=None
+}
+
+MeasurementTool <|-- Fiducial
+MeasurementTool <|-- Segmentation
+MeasurementTool <|-- Ruler
+
+MeasurementTool ..> Lesion
+
+
+Finding "1" *-- "1" LesionAssessment: has_a
+Finding "1" *-- "1" Lesion: has_a
+LesionAssessment::lesion "1" ..> "1" Lesion: has_a
+
+
+Report::findings "1" ..> "n" Finding
+Report::studyAssessment "1" ..> "1" StudyAssessment
+
+Assessment <|-- LesionAssessment
+Assessment <|-- StudyAssessment
+
+@enduml
