@@ -1,0 +1,44 @@
+@startuml
+
+class Widget {
+  - __formGeneratorFactory
+  + setup()
+}
+
+Widget::__formGeneratorFactory ..> FormGeneratorFactory: uses
+
+
+class FormGeneratorFactory {
+  + {static} getFormGenerator(filePath): JSONFormGenerator
+}
+
+FormGeneratorFactory::getFormGenerator ..> FormGenerator: returns
+
+class FormGenerator {
+  + {virtual} generate(): QFrame
+  - __init__(filePath)
+}
+
+' factory pattern taking json file name returning
+
+class JSONFormGenerator {
+
+}
+
+class YAMLFormGenerator {
+
+}
+
+note left of FormGeneratorFactory: \
+Depending on file type returning \n\
+a concrete implementation of \n\
+FormGenerator
+
+FormGenerator <|-- JSONFormGenerator
+FormGenerator <|-- YAMLFormGenerator
+
+class StringField {
+
+}
+
+@enduml
