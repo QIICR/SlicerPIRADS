@@ -3,7 +3,7 @@ import ctk
 import slicer
 import inspect
 
-from SlicerPIRADSLogic.JSONFormGenerator import JSONFormGenerator
+from SlicerPIRADSLogic.JSONFormGenerator import *
 from SlicerPIRADSLogic.FormGeneratorFactory import FormGeneratorFactory
 
 from slicer.ScriptedLoadableModule import ScriptedLoadableModuleTest, ScriptedLoadableModuleWidget
@@ -90,38 +90,54 @@ class SlicerPIRADSTest(ScriptedLoadableModuleTest):
 
     self.delayDisplay('Test passed!')
 
-  def test_json_form_generator_string_type(self):
+  def test_json_form_generator_string_field(self):
     self.delayDisplay('Starting %s' % inspect.stack()[0][3])
 
-    elem = JSONFormGenerator.generateStringUIElement({
-        "PERSON":{
-          "type": "string",
-          "description": "First and Last name"
-        }
-      })
-    self.assertIsInstance(elem, qt.QLineEdit)
-
-    elem = JSONFormGenerator.generateStringUIElement({
+    elem = JSONStringField("name", {
         "type": "string",
-        "enum": ["male", "female"]
-      })
-    self.assertIsInstance(elem, qt.QButtonGroup)
-    self.assertEqual(len(elem.buttons()), 2)
-
-    self.delayDisplay('Test passed!')
+        "description": "First and Last name",
+        "minLength": 4,
+        "default": "John Doe"
+      }
+    )
+    self.assertDictEqual(elem.getData(), {"name": "John Doe"})
+    #
+    # elem = JSONFormGenerator.generateStringUIElement({
+    #     "type": "string",
+    #     "enum": ["male", "female"]
+    #   })
+    # self.assertIsInstance(elem, qt.QButtonGroup)
+    # self.assertEqual(len(elem.buttons()), 2)
+    #
+    # self.delayDisplay('Test passed!')
 
   def test_json_form_generator_integer_type(self):
     self.delayDisplay('Starting %s' % inspect.stack()[0][3])
 
-    elem = JSONFormGenerator.generateIntegerUIElement({
+    elem = JSONIntegerField("age", {
         "type": "integer",
         "default": 25,
         "minimum": 18,
         "maximum": 99
       })
-    self.assertIsInstance(elem, qt.QSpinBox)
-    self.assertEqual(elem.value, 25)
-    self.assertEqual(elem.minimum, 18)
-    self.assertEqual(elem.maximum, 99)
+
+    self.assertDictEqual(elem.getData(), {"age": 25})
+    self.assertEqual(elem._validator.bottom, 18)
+    self.assertEqual(elem._validator.top, 99)
 
     self.delayDisplay('Test passed!')
+
+  def test_json_form_generator_object_field(self):
+    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+
+    import os
+    path = os.path.join(os.path.dirname(os.path.normpath(os.path.dirname(inspect.getfile(FormGeneratorFactory)))),
+                        "testForm.json")
+
+    formGenerator = FormGeneratorFactory.getFormGenerator(path)
+    form = formGenerator.generate()
+    expected = {'Person': {'age': 30, 'name': 'John Doe'}}
+    self.assertDictEqual(form.getData(), expected)
+
+    self.delayDisplay('Test passed!')
+

@@ -37,8 +37,57 @@ FormGenerator
 FormGenerator <|-- JSONFormGenerator
 FormGenerator <|-- YAMLFormGenerator
 
-class StringField {
+abstract class AbstractField {
+  # _title: string
+  # _schema: dict
+  # _data: dict
+  + getData(): dict
+  + {abstract} setup()
+  # _updateData(key, value)
+}
+
+AbstractField <|-- AbstractFieldWidget
+qt.QWidget <|-- AbstractFieldWidget
+
+
+abstract class AbstractFieldWidget {
+}
+
+class JSONFieldFactory {
+}
+
+class JSONStringField {
 
 }
+
+class JSONObjectField {
+  # _data: dict
+}
+
+AbstractField <|-- JSONObjectField
+qt.QGroupBox <|-- JSONObjectField
+
+
+class JSONNumberField {
+
+}
+
+class JSONIntegerField {
+
+}
+
+class JSONArrayField {
+}
+
+class JSONEnumField {
+}
+
+AbstractFieldWidget <|-- JSONEnumField
+JSONEnumField <|-- JSONStringField
+JSONEnumField <|-- JSONNumberField
+JSONNumberField <|-- JSONIntegerField
+AbstractFieldWidget <|-- JSONArrayField
+
+JSONFormGenerator ..> AbstractFieldWidget:uses
 
 @enduml

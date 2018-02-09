@@ -1,0 +1,68 @@
+{
+  "Procedure Information": {
+    "type": "object",
+    "properties": {
+      "Exam quality": {
+        "type": "object",
+        "properties": {
+          "General exam quality": {
+            "type": "string"
+          },
+          "Rectal cleaning": {
+            "type": "string"
+          }
+        }
+      },
+      "Technical details" : {
+        "type": "object",
+        "properties": {
+          "Protocol details": {
+            "type": "string"
+          },
+          "Field of MRI scanner": {
+            "type": "string",
+            "enum": ["1.5T", "3T"],
+            "default": "3T"
+          },
+          "Type of the contrast medium": {
+            "type": "string"
+          },
+          "Volume of contrast medium [mL]": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "Clinical Information": {
+    "type": "object",
+    "properties": {
+      "Prostate Specific Antigene (PSA)": {
+        "type": "object",
+        "properties": {
+          "PSA last value [ng/mL]": {
+            "type": "number"
+          },
+          "PSA ratio": {
+            "type": "number"
+          },
+          "PSA history and other PSA derivatives": {
+            "type": "string",
+            "ui:widget": "textarea"
+          }
+        }
+      },
+      "Other clinical information": {
+        "type": "object",
+        "properties": {
+          "Previous biopsy and Gleason Score": {
+            "type": "number"
+          },
+          "Digital rectal examination (DRE)": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
