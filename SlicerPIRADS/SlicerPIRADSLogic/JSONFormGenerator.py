@@ -16,7 +16,7 @@ class JSONFormGenerator(FormGenerator):
 
   def generate(self):
     with open(self.filePath) as data_file:
-      data = json.load(data_file , object_pairs_hook=OrderedDict)
+      data = json.load(data_file, object_pairs_hook=OrderedDict)
       return self._generate(data)
 
   def _generate(self, schema):

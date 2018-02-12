@@ -8,5 +8,7 @@ slicer_add_python_unittest(
 slicerMacroBuildScriptedModule(
   NAME ${MODULE_NAME}SelfTests
   SCRIPTS SlicerPIRADSTests.py
-  RESOURCES testForm.json
+  RESOURCES
+    test_schema.json
+    test_data.json
 )

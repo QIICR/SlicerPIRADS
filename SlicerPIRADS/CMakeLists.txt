@@ -6,9 +6,13 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/FormGenerator.py
   SlicerPIRADSLogic/FormGeneratorFactory.py
   SlicerPIRADSLogic/JSONFormGenerator.py
+  SlicerPIRADSLogic/Configuration.py
   )
 
 set(MODULE_PYTHON_RESOURCES
+  Resources/default.cfg
+  Resources/Forms/Clinical_Information.json
+  Resources/Forms/Procedure_Information.json
 )
 
 slicerMacroBuildScriptedModule(

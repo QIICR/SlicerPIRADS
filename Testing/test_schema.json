@@ -1,0 +1,86 @@
+{
+  "type": "object",
+  "properties": {
+    "Procedure Information": {
+      "type": "object",
+      "properties": {
+        "Exam quality": {
+          "type": "object",
+          "properties": {
+            "General exam quality": {
+              "type": "string",
+              "default": "good"
+            },
+            "Rectal cleaning": {
+              "type": "string",
+              "default": "yes"
+            }
+          }
+        },
+        "Technical details": {
+          "type": "object",
+          "properties": {
+            "Protocol details": {
+              "type": "string",
+              "default": "Nothing"
+            },
+            "Field of MRI scanner": {
+              "type": "string",
+              "enum": [
+                "1.5T",
+                "3T"
+              ],
+              "default": "3T"
+            },
+            "Type of the contrast medium": {
+              "type": "string",
+              "default": "Gadolinium"
+            },
+            "Volume of contrast medium [mL]": {
+              "type": "number",
+              "default": 20.0
+            }
+          }
+        }
+      }
+    },
+    "Clinical Information": {
+      "type": "object",
+      "properties": {
+        "Prostate Specific Antigene (PSA)": {
+          "type": "object",
+          "properties": {
+            "PSA last value [ng/mL]": {
+              "type": "number",
+              "default": 21.0
+            },
+            "PSA ratio": {
+              "type": "number",
+              "default": 1.2
+            },
+            "PSA history and other PSA derivatives": {
+              "type": "string",
+              "ui:widget": "textarea",
+              "default": "no history"
+            }
+          }
+        },
+        "Other clinical information": {
+          "type": "object",
+          "properties": {
+            "Previous biopsy and Gleason Score": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 10,
+              "default": 3
+            },
+            "Digital rectal examination (DRE)": {
+              "type": "string",
+              "default": "not done"
+            }
+          }
+        }
+      }
+    }
+  }
+}

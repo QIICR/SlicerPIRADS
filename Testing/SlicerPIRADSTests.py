@@ -74,6 +74,10 @@ class SlicerPIRADSTest(ScriptedLoadableModuleTest):
     for testName in [f for f in SlicerPIRADSTest.__dict__.keys() if f.startswith('test_')]:
       getattr(self, testName)()
 
+  def delayDisplay(self,message,requestedDelay=None):
+    requestedDelay = requestedDelay if requestedDelay else 300
+    super(SlicerPIRADSTest, self).delayDisplay(message,requestedDelay)
+
   def test_right_generator(self):
     self.delayDisplay('Starting %s' % inspect.stack()[0][3])
 
@@ -132,12 +136,17 @@ class SlicerPIRADSTest(ScriptedLoadableModuleTest):
 
     import os
     path = os.path.join(os.path.dirname(os.path.normpath(os.path.dirname(inspect.getfile(FormGeneratorFactory)))),
-                        "testForm.json")
+                        "test_schema.json")
 
     formGenerator = FormGeneratorFactory.getFormGenerator(path)
     form = formGenerator.generate()
-    expected = {'Person': {'age': 30, 'name': 'John Doe'}}
-    self.assertDictEqual(form.getData(), expected)
+    dataPath = os.path.join(os.path.dirname(os.path.normpath(os.path.dirname(inspect.getfile(FormGeneratorFactory)))),
+                            "test_data.json")
+    with open(dataPath) as data_file:
+      import json
+      expected = json.load(data_file)
+      self.maxDiff = None
+      self.assertDictEqual(form.getData(), expected)
 
     self.delayDisplay('Test passed!')
 

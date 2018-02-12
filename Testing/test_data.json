@@ -1,0 +1,23 @@
+{
+  "Clinical Information": {
+    "Other clinical information": {
+      "Previous biopsy and Gleason Score": 3,
+      "Digital rectal examination (DRE)": "not done"
+    },
+    "Prostate Specific Antigene (PSA)": {
+      "PSA ratio": 1.2,
+      "PSA last value [ng/mL]": 21.0,
+      "PSA history and other PSA derivatives": "no history"}
+  },
+  "Procedure Information": {
+    "Exam quality": {
+      "General exam quality": "good",
+      "Rectal cleaning": "yes"
+    },
+    "Technical details": {
+      "Field of MRI scanner": "1.5T",
+      "Type of the contrast medium": "Gadolinium",
+      "Protocol details": "Nothing",
+      "Volume of contrast medium [mL]": 20.0}
+  }
+}
