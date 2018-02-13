@@ -30,6 +30,8 @@ class JSONFieldFactory(object):
     dataType = schema.get('type')
     if dataType == "object":
       return JSONObjectField
+    elif schema.has_key("enum"):
+        return JSONEnumField
     else:
       if dataType == "string":
         return JSONStringField
@@ -47,32 +49,48 @@ class AbstractField(ParameterNodeObservationMixin):
   UpdateEvent = vtk.vtkCommand.UserEvent + 100
 
   def __init__(self, title, schema):
+    self._type = schema.get('type')
     self.title = title
     self._schema = schema
-    self._data = dict()
     self.setup()
 
   def setup(self):
     return NotImplementedError
 
   def getData(self):
-    return self._data
+    return NotImplementedError
 
   def setData(self, data):
-    #TODO: needs to iterate trough objects etc.
+    # TODO: needs to iterate trough objects etc.
     # editable?
     raise NotImplementedError
-
-  def _updateData(self, key, value):
-    self._data[key] = value
-    self.invokeEvent(self.UpdateEvent, str([key, value]))
 
 
 class AbstractFieldWidget(qt.QWidget, AbstractField):
 
   def __init__(self, title, schema, parent=None):
+    self._elem = None
+    self._data = dict()
     qt.QWidget.__init__(self, parent)
     AbstractField.__init__(self, title, schema)
+
+  def getData(self):
+    return self._data
+
+  def getElement(self):
+    return self._elem
+
+  def _updateData(self, key, value):
+    try:
+      value = JSONTypeConverter.getPythonType(self._type)(value)
+    except ValueError:
+      value = None
+
+    if not value:
+      self._data.pop(key, None)
+    else:
+      self._data[key] = value
+    self.invokeEvent(self.UpdateEvent, str([key, value]))
 
 
 class JSONObjectField(qt.QGroupBox, AbstractField):
@@ -106,9 +124,10 @@ class JSONObjectField(qt.QGroupBox, AbstractField):
     self.elements.append(elem)
 
   def getData(self):
+    data = dict()
     for elem in self.elements:
-      self._data.update(elem.getData())
-    return self._data if not self.title else {self.title: self._data}
+      data.update(elem.getData())
+    return data if not self.title else {self.title: data}
 
 
 class JSONArrayField(qt.QGroupBox, AbstractField):
@@ -120,25 +139,19 @@ class JSONEnumField(AbstractFieldWidget):
 
   def setup(self):
     self.setLayout(qt.QFormLayout())
-    if self._schema.get("enum"):
-      elem = self._setupEnumField()
-    else:
-      elem = self._setupField()
-    self.layout().addWidget(elem)
-
-  def _setupEnumField(self):
     widgetClass = self._schema.get("ui:widget", "combo")
     if widgetClass == "radio":
-      elem = self.__setupRadioButtonGroup()
+      self._elem = self.__setupRadioButtonGroup()
     else:
-      elem = self.__setupComboBox()
+      self._elem = self.__setupComboBox()
     if self._schema.get("description"):
-      elem.setToolTip(self._schema["description"])
-    return elem
+      self._elem.setToolTip(self._schema["description"])
+    self.layout().addWidget(self._elem)
 
   def __setupComboBox(self):
     elem = qt.QComboBox()
-    elem.connect("currentIndexChanged(QString)", lambda text: self._updateData(self.title, text))
+    elem.connect("currentIndexChanged(QString)",
+                 lambda text: self._updateData(self.title, text))
     elem.addItems(self._schema["enum"])
     return elem
 
@@ -155,49 +168,58 @@ class JSONEnumField(AbstractFieldWidget):
       self.__buttonGroup.addButton(b)
     return elem
 
-  def _setupField(self):
-    raise NotImplementedError
 
+class JSONStringField(AbstractFieldWidget):
 
-class JSONStringField(JSONEnumField):
-
-  def _setupField(self):
+  def setup(self):
+    self.setLayout(qt.QFormLayout())
     widgetClass = self._schema.get("ui:widget", "line")
     if widgetClass == "textarea":
-      elem = qt.QTextEdit()
-      elem.textChanged.connect(lambda: self._updateData(self.title, elem.toPlainText()))
+      self._elem = self._setupTextArea()
     else:
-      # has pattern?
-      elem = qt.QLineEdit()
-      elem.textChanged.connect(lambda text: self._updateData(self.title, text))
+      self._elem = self._setupLineEdit()
+    self._configureAdditionalElementAttributes()
+    self.layout().addWidget(self._elem)
 
+  def _configureAdditionalElementAttributes(self):
     if self._schema.get("maxLength"):
-      elem.setMaxLength(self._schema["maxLength"])
+      self._elem.setMaxLength(self._schema["maxLength"])
     if self._schema.get("default"):
       default = self._schema["default"]
-      elem.setText(default)
+      self._elem.setText(default)
     if self._schema.get("description"):
-      elem.setToolTip(self._schema["description"])
+      self._elem.setToolTip(self._schema["description"])
+
+  def _setupTextArea(self):
+    elem = qt.QTextEdit()
+    elem.textChanged.connect(lambda: self._updateData(self.title, elem.toPlainText()))
+    return elem
+
+  def _setupLineEdit(self):
+    # has pattern?
+    elem = qt.QLineEdit()
+    elem.textChanged.connect(lambda text: self._updateData(self.title, text))
     return elem
 
 
-class JSONNumberField(JSONEnumField):
+class JSONNumberField(AbstractFieldWidget):
 
   validatorClass = qt.QDoubleValidator
 
-  def _setupField(self):
+  def setup(self):
+    self.setLayout(qt.QFormLayout())
     self._configureValidator()
-    elem = qt.QLineEdit()
-    self._connectField(elem)
-    elem.setValidator(self._validator)
+    self._elem = qt.QLineEdit()
+    self._connectField()
+    self._elem.setValidator(self._validator)
     if self._schema.get("default"):
-      elem.setText(self._schema["default"])
+      self._elem.setText(self._schema["default"])
     if self._schema.get("description"):
-      elem.setToolTip(self._schema["description"])
-    return elem
+      self._elem.setToolTip(self._schema["description"])
+    self.layout().addWidget(self._elem)
 
-  def _connectField(self, elem):
-    elem.textChanged.connect(lambda n: self._updateData(self.title, float(n)))
+  def _connectField(self):
+    self._elem.textChanged.connect(lambda n: self._updateData(self.title, n))
 
   def _configureValidator(self):
     self._validator = self.validatorClass()
@@ -212,5 +234,20 @@ class JSONIntegerField(JSONNumberField):
 
   validatorClass = qt.QIntValidator
 
-  def _connectField(self, elem):
-    elem.textChanged.connect(lambda n: self._updateData(self.title, int(n)))
+  def _connectField(self):
+    self._elem.textChanged.connect(lambda n: self._updateData(self.title, n))
+
+
+class JSONTypeConverter(object):
+
+  @staticmethod
+  def getPythonType(jsonType):
+    if jsonType == 'number':
+      return float
+    elif jsonType == 'integer':
+      return int
+    elif jsonType == 'string':
+      return str
+    elif jsonType == 'boolean':
+      return bool
+    return None

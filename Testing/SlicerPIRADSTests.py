@@ -2,6 +2,8 @@ import qt
 import ctk
 import slicer
 import inspect
+import sys
+import logging
 
 from SlicerPIRADSLogic.JSONFormGenerator import *
 from SlicerPIRADSLogic.FormGeneratorFactory import FormGeneratorFactory
@@ -9,7 +11,7 @@ from SlicerPIRADSLogic.FormGeneratorFactory import FormGeneratorFactory
 from slicer.ScriptedLoadableModule import ScriptedLoadableModuleTest, ScriptedLoadableModuleWidget
 
 
-__all__ = ['SlicerPIRADSTest']
+__all__ = ['FormGeneratorFactoryTest', 'JSONFormGeneratorTest'] #'SlicerPIRADSTest',
 
 
 class SlicerPIRADSTests:
@@ -55,11 +57,11 @@ class SlicerPIRADSTestsWidget(ScriptedLoadableModuleWidget):
   def generateButtons(self):
 
     def onButtonPressed(button):
-      tester = SlicerPIRADSTest()
-      getattr(tester, button.name)()
+      tester = getattr(sys.modules[__name__], button.name)()
+      tester.runTest()
 
     buttons = []
-    for testName in [f for f in SlicerPIRADSTest.__dict__.keys() if f.startswith('test_')]:
+    for testName in __all__:
       b = qt.QPushButton(testName)
       b.name = testName
       self.testsCollapsibleButton.layout().addWidget(b)
@@ -68,55 +70,77 @@ class SlicerPIRADSTestsWidget(ScriptedLoadableModuleWidget):
     map(lambda b: b.clicked.connect(lambda clicked: onButtonPressed(b)), buttons)
 
 
-class SlicerPIRADSTest(ScriptedLoadableModuleTest):
+class PIRADSModuleTestsBase(ScriptedLoadableModuleTest):
 
   def runTest(self):
-    for testName in [f for f in SlicerPIRADSTest.__dict__.keys() if f.startswith('test_')]:
+    self.delayDisplay('Starting %s' % self.__class__.__name__)
+    for testName in [f for f in self.__class__.__dict__.keys() if f.startswith('test_')]:
       getattr(self, testName)()
+    self.delayDisplay('Test passed!')
 
-  def delayDisplay(self,message,requestedDelay=None):
-    requestedDelay = requestedDelay if requestedDelay else 300
-    super(SlicerPIRADSTest, self).delayDisplay(message,requestedDelay)
+
+class FormGeneratorFactoryTest(PIRADSModuleTestsBase):
 
   def test_right_generator(self):
-    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+    logging.info('Starting %s' % inspect.stack()[0][3])
 
     formGenerator = FormGeneratorFactory.getFormGenerator("/foo/bar/schema.json")
     self.assertIsInstance(formGenerator, JSONFormGenerator)
 
-    self.delayDisplay('Test passed!')
-
-  def test_extension_not_supported(self):
-    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+  def test_file_extension_not_supported(self):
+    logging.info('Starting %s' % inspect.stack()[0][3])
 
     with self.assertRaises(ValueError):
       FormGeneratorFactory.getFormGenerator("/foo/bar/schema.xyz")
 
-    self.delayDisplay('Test passed!')
+
+class JSONFormGeneratorTest(PIRADSModuleTestsBase):
 
   def test_json_form_generator_string_field(self):
-    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+    logging.info('Starting %s' % inspect.stack()[0][3])
 
     elem = JSONStringField("name", {
         "type": "string",
         "description": "First and Last name",
         "minLength": 4,
         "default": "John Doe"
-      }
-    )
+      })
     self.assertDictEqual(elem.getData(), {"name": "John Doe"})
-    #
-    # elem = JSONFormGenerator.generateStringUIElement({
-    #     "type": "string",
-    #     "enum": ["male", "female"]
-    #   })
-    # self.assertIsInstance(elem, qt.QButtonGroup)
-    # self.assertEqual(len(elem.buttons()), 2)
-    #
-    # self.delayDisplay('Test passed!')
+
+  def test_json_form_generator_enum(self):
+    logging.info('Starting %s' % inspect.stack()[0][3])
+
+    elem = JSONEnumField("Field of MRI scanner", {
+        "type": "string",
+        "enum": [
+          "1.5T",
+          "3T"
+        ]
+      })
+    self.assertIsInstance(elem.getElement(), qt.QComboBox)
+
+    elem = JSONEnumField("Field of MRI scanner", {
+        "type": "string",
+        "ui:widget": "combo",
+        "enum": [
+          "1.5T",
+          "3T"
+        ]
+      })
+    self.assertIsInstance(elem.getElement(), qt.QComboBox)
+
+    elem = JSONEnumField("Field of MRI scanner", {
+        "type": "string",
+        "ui:widget": "radio",
+        "enum": [
+            "1.5T",
+            "3T"
+          ]
+      })
+    self.assertIsInstance(elem.getElement(), qt.QFrame)
 
   def test_json_form_generator_integer_type(self):
-    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+    logging.info('Starting %s' % inspect.stack()[0][3])
 
     elem = JSONIntegerField("age", {
         "type": "integer",
@@ -129,10 +153,8 @@ class SlicerPIRADSTest(ScriptedLoadableModuleTest):
     self.assertEqual(elem._validator.bottom, 18)
     self.assertEqual(elem._validator.top, 99)
 
-    self.delayDisplay('Test passed!')
-
   def test_json_form_generator_object_field(self):
-    self.delayDisplay('Starting %s' % inspect.stack()[0][3])
+    logging.info('Starting %s' % inspect.stack()[0][3])
 
     import os
     path = os.path.join(os.path.dirname(os.path.normpath(os.path.dirname(inspect.getfile(FormGeneratorFactory)))),
@@ -148,5 +170,9 @@ class SlicerPIRADSTest(ScriptedLoadableModuleTest):
       self.maxDiff = None
       self.assertDictEqual(form.getData(), expected)
 
-    self.delayDisplay('Test passed!')
+
+class SlicerPIRADSTest(ScriptedLoadableModuleTest):
+
+  def runTest(self):
+    pass
 

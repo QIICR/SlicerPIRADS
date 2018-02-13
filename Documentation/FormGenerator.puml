@@ -22,6 +22,7 @@ class FormGenerator {
 ' factory pattern taking json file name returning
 
 class JSONFormGenerator {
+  # _generate()
 
 }
 
@@ -53,20 +54,19 @@ qt.QWidget <|-- AbstractFieldWidget
 abstract class AbstractFieldWidget {
 }
 
-class JSONFieldFactory {
-}
-
 class JSONStringField {
 
 }
 
 class JSONObjectField {
+  + elements: list[AbstractField]
   # _data: dict
 }
 
-AbstractField <|-- JSONObjectField
+JSONObjectField::elements "0" ..> "*" AbstractField
 qt.QGroupBox <|-- JSONObjectField
 
+AbstractField <|-- JSONObjectField
 
 class JSONNumberField {
 
@@ -83,11 +83,12 @@ class JSONEnumField {
 }
 
 AbstractFieldWidget <|-- JSONEnumField
-JSONEnumField <|-- JSONStringField
-JSONEnumField <|-- JSONNumberField
-JSONNumberField <|-- JSONIntegerField
+AbstractFieldWidget <|-- JSONStringField
+AbstractFieldWidget <|-- JSONNumberField
+AbstractFieldWidget <|-- JSONIntegerField
+
 AbstractFieldWidget <|-- JSONArrayField
 
-JSONFormGenerator ..> AbstractFieldWidget:uses
+JSONFormGenerator ..> JSONObjectField:uses
 
 @enduml
