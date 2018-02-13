@@ -3,7 +3,9 @@ import os
 import qt
 from slicer.ScriptedLoadableModule import *
 
-from SlicerDevelopmentToolboxUtils.mixins import ModuleWidgetMixin, ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleLogicMixin
+from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
+from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
 
 
 class SlicerPIRADS(ScriptedLoadableModule):
@@ -28,14 +30,34 @@ class SlicerPIRADS(ScriptedLoadableModule):
     """
 
 
-class SlicerPIRADSWidget(ModuleWidgetMixin, ScriptedLoadableModuleWidget):
+class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def __init__(self, parent=None):
     ScriptedLoadableModuleWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
+    SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
+    self.assessmentWidget = None
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
+    self._studyAssessmentButton = UICreationHelpers.createButton("Add Study Assessment")
+    self.layout.addWidget(self._studyAssessmentButton)
+
+    self.setupConnections()
+    self.layout.addStretch(1)
+
+  def setupConnections(self):
+    self._studyAssessmentButton.clicked.connect(self._onStudyAssessmentButtonClicked)
+
+  def _onStudyAssessmentButtonClicked(self):
+    # TODO: take care of situations when number of forms get changed in between
+    if not self.assessmentWidget:
+      forms = GeneralModuleMixin.getSetting(self, "Study_Assessment_Forms")
+      if forms:
+        forms = [os.path.join(self.modulePath, 'Resources', 'Forms', f) for f in forms.split(" ")]
+        self.assessmentWidget = AssessmentWidget(forms)
+    self.assessmentWidget.exec_()
+    print self.assessmentWidget.getData()
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
@@ -44,7 +66,7 @@ class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
     ScriptedLoadableModuleLogic.__init__(self)
 
 
-class SlicerPIRADSSlicelet(qt.QWidget, ModuleWidgetMixin):
+class SlicerPIRADSSlicelet(qt.QWidget):
 
   def __init__(self):
     qt.QWidget.__init__(self)
