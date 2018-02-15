@@ -8,7 +8,7 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/JSONFormGenerator.py
   SlicerPIRADSLogic/Configuration.py
   SlicerPIRADSWidgets/__init__.py
-  SlicerPIRADSWidgets/AssessmentWidget.py
+  SlicerPIRADSWidgets/AssessmentDialog.py
   )
 
 set(MODULE_PYTHON_RESOURCES

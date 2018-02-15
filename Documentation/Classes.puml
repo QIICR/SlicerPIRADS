@@ -8,12 +8,12 @@ package SlicerPIRADSWidget {
 class MultiVolumeExplorerWidget {
 }
 
-class AssessmentWidget {
+class AssessmentDialog {
   + setAssessment(): Assessment
 }
 
-AssessmentWidget <|-- StudyAssessmentWidget
-AssessmentWidget <|-- LesionAssessmentWidget
+AssessmentDialog <|-- StudyAssessmentWidget
+AssessmentDialog <|-- LesionAssessmentWidget
 
 class PatientInfoWidget {
 }

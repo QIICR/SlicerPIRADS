@@ -5,7 +5,7 @@ from slicer.ScriptedLoadableModule import *
 
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleLogicMixin
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
-from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
+from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
 
 
 class SlicerPIRADS(ScriptedLoadableModule):
@@ -36,28 +36,106 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     ScriptedLoadableModuleWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
-    self.assessmentWidget = None
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-    self._studyAssessmentButton = UICreationHelpers.createButton("Add Study Assessment")
-    self.layout.addWidget(self._studyAssessmentButton)
-
-    self.setupConnections()
+    self._studyAssessmentWidget = SlicerPIRADSStudyLevelAssessmentWidget()
+    self._findingsWidget = SlicerPIRADSSFindingsWidget()
+    self.layout.addWidget(self._studyAssessmentWidget)
+    self.layout.addWidget(self._findingsWidget)
     self.layout.addStretch(1)
 
+
+class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
+
+  def __init__(self, parent=None):
+    qt.QWidget.__init__(self, parent)
+    self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self.setup()
+    self.setupConnections()
+
+  def setup(self):
+    self._assessmentFormWidget = None
+
+    self.setLayout(qt.QGridLayout())
+    self._loadUI()
+    self.layout().addWidget(self.ui)
+
+  def _loadUI(self):
+    path = os.path.join(self.modulePath, 'Resources', 'UI', 'StudyLevelAssessmentWidget.ui')
+    self.ui = slicer.util.loadUI(path)
+    self._studyLevelAssessmentButton = self.ui.findChild(qt.QPushButton, "studyLevelAssessmentButton")
+    self._studyAssessmentListView = self.ui.findChild(qt.QListView, "studyAssessmentView")
+
   def setupConnections(self):
-    self._studyAssessmentButton.clicked.connect(self._onStudyAssessmentButtonClicked)
+    self._studyLevelAssessmentButton.clicked.connect(self._onStudyAssessmentButtonClicked)
 
   def _onStudyAssessmentButtonClicked(self):
-    # TODO: take care of situations when number of forms get changed in between
-    if not self.assessmentWidget:
-      forms = GeneralModuleMixin.getSetting(self, "Study_Assessment_Forms")
-      if forms:
-        forms = [os.path.join(self.modulePath, 'Resources', 'Forms', f) for f in forms.split(" ")]
-        self.assessmentWidget = AssessmentWidget(forms)
-    self.assessmentWidget.exec_()
-    print self.assessmentWidget.getData()
+    if self._studyAssessmentListView.count != 0:
+      self._studyAssessmentListView.clear()
+      self._studyLevelAssessmentButton.icon = qt.QIcon(":/Icons/Add.png")
+    else:
+      # TODO: take care of situations when number of forms get changed in between
+      if not self._assessmentFormWidget:
+        forms = GeneralModuleMixin.getSetting(self, "Study_Assessment_Forms", moduleName="SlicerPIRADS")
+        if forms:
+          forms = [os.path.join(self.modulePath, 'Resources', 'Forms', f) for f in forms.split(" ")]
+          self._assessmentFormWidget = AssessmentDialog(forms)
+      self._assessmentFormWidget.exec_()
+      print self._assessmentFormWidget.getData()
+      # TODO: if item added, change icon and react
+      self._studyAssessmentListView.addItem(self._assessmentFormWidget.getData())
+      self._studyLevelAssessmentButton.icon = qt.QIcon(":/Icons/Remove.png")
+
+
+class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
+
+  def __init__(self, parent=None):
+    qt.QWidget.__init__(self, parent)
+    self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self.setup()
+    self.setupConnections()
+
+  def setup(self):
+    self._assessmentFormWidget = None
+
+    self.setLayout(qt.QGridLayout())
+    self._loadUI()
+    self.layout().addWidget(self.ui)
+
+  def _loadUI(self):
+    path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingsWidget.ui')
+    self.ui = slicer.util.loadUI(path)
+    self._findingsButton = self.ui.findChild(qt.QPushButton, "findingsButton")
+    self._findingsListView = self.ui.findChild(qt.QListView, "findingsListView")
+
+  def setupConnections(self):
+    self._findingsButton.clicked.connect(self._onStudyAssessmentButtonClicked)
+
+  def _onStudyAssessmentButtonClicked(self):
+    # TODO: findings assessment
+    # TODO: add segmentation and enable editor
+    pass
+
+
+class FindingsModel(qt.QAbstractListModel):
+
+  def __init__(self):
+    pass
+
+  def rowCount(self):
+    # TODO: implement
+    pass
+
+  def data(self):
+    # TODO: implement
+    pass
+
+  def addFinding(self, finding):
+    pass
+
+  def removeFinding(self, finding):
+    pass
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
@@ -98,6 +176,15 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 
     self.mainWidget.layout().addWidget(self.splitter)
     self.mainWidget.show()
+    self.configureStyle()
+
+  def configureStyle(self):
+    slicer.app.setStyleSheet("""
+      QWidget{
+        background-color: #555555;
+        color: white;
+      }
+    """)
 
   def setupLayoutWidget(self):
     # TODO: configurable ...
@@ -118,7 +205,6 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 
   def onSplitterMoved(self, pos, index):
     vScroll = self.scrollArea.verticalScrollBar()
-    print self.moduleFrame.width, self.widget.parent.width, self.scrollArea.width, vScroll.width
     vScrollbarWidth = 4 if not vScroll.isVisible() else vScroll.width + 4
     if self.scrollArea.minimumWidth != self.widget.parent.minimumSizeHint.width() + vScrollbarWidth:
       self.scrollArea.setMinimumWidth(self.widget.parent.minimumSizeHint.width() + vScrollbarWidth)
@@ -132,9 +218,5 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 
 
 if __name__ == "SlicerPIRADSSlicelet":
-  import sys
-
-  print(sys.argv)
-
   slicelet = SlicerPIRADSSlicelet()
 

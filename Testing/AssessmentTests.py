@@ -1,6 +1,6 @@
 import unittest
 
-from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget, AssessmentLogic
+from SlicerPIRADSWidgets.AssessmentWidget import AssessmentDialog, AssessmentLogic
 
 __all__ = ['AssessmentLogicTests', 'AssessmentWidgetTests']
 
