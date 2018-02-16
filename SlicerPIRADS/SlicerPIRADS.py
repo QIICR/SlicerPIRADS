@@ -97,6 +97,8 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.setupConnections()
 
   def setup(self):
+    self._findingsModel = FindingsModel()
+
     self._assessmentFormWidget = None
 
     self.setLayout(qt.QGridLayout())
@@ -106,36 +108,170 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
   def _loadUI(self):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingsWidget.ui')
     self.ui = slicer.util.loadUI(path)
-    self._findingsButton = self.ui.findChild(qt.QPushButton, "findingsButton")
-    self._findingsListView = self.ui.findChild(qt.QListView, "findingsListView")
+    self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
+    self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
+    self._findingsListWidget = self.ui.findChild(qt.QListView, "findingsListView")
+    self._findingsListWidget.setModel(self._findingsModel)
+    self.updateButtons()
 
   def setupConnections(self):
-    self._findingsButton.clicked.connect(self._onStudyAssessmentButtonClicked)
+    self._addFindingsButton.clicked.connect(self._onAddFindingsButtonClicked)
+    self._removeFindingsButton.clicked.connect(self._onRemoveFindingsButtonClicked)
 
-  def _onStudyAssessmentButtonClicked(self):
+  def _onAddFindingsButtonClicked(self):
     # TODO: findings assessment
     # TODO: add segmentation and enable editor
-    pass
+    measurementSelector = MeasurementToolSelectionDialog()
+    if measurementSelector.exec_():
+      # show widget and activate tool
+      import random
+      finding = Finding("Finding %s" %random.randint(0,10))
+      finding.createLesion(measurementSelector.getSelectedMRMLNodeClass())
+      self._findingsModel.addFinding(finding)
+      self.updateButtons()
+
+  def _onRemoveFindingsButtonClicked(self):
+    # TODO: if finding is selected, for now only removing last one
+    self._findingsModel.removeFinding(self._findingsModel._findings[-1])
+    self.updateButtons()
+
+  def updateButtons(self):
+    self._removeFindingsButton.setEnabled(self._findingsModel.rowCount())
 
 
 class FindingsModel(qt.QAbstractListModel):
 
+  def __init__(self, parent=None, *args):
+    qt.QAbstractListModel.__init__(self, parent, *args)
+    self._findings = []
+
+  def rowCount(self):
+    return len(self._findings)
+
+  def insertRows(self, row, count, parent=qt.QModelIndex()):
+    self.beginInsertRows(parent, row, count)
+    self.endInsertRows()
+
+  def removeRows(self, row, count, parent=qt.QModelIndex()):
+    self.beginRemoveRows(parent, row, count)
+    self.endRemoveRows()
+
+  def data(self, index, role=qt.Qt.DisplayRole):
+    if index.isValid() and role == qt.Qt.DisplayRole:
+      return self._findings[index.row()].getName()
+    elif role == qt.Qt.DecorationRole:
+      # TODO: add custom icon depending on what tool for segmentation was used
+      return self._findings[index.row()].getLesion().getIcon()
+    else:
+      return None
+
+  def addFinding(self, finding):
+    self._findings.append(finding)
+    # TODO: connect to finding events so that the model can be updated on finding changes
+    self.insertRows(len(self._findings)-1, 1)
+
+  def removeFinding(self, finding):
+    self.removeRows(self._findings.index(finding), 1)
+    self._findings.pop(self._findings.index(finding))
+
+
+class Finding(object):
+
+  def __init__(self, name):
+    self._name = name
+    self._assessment = None
+    # TODO: assessment holds data like location and score
+
+  def __del__(self):
+    # remove lesion
+    # if self._lesion:
+    #   slicer.mrmlScene.RemoveNode(self._lesion)
+    pass
+
+  def setName(self, name):
+    self._name = name
+
+  def getName(self):
+    return self._name
+
+  def createLesion(self, mrmlNodeClass):
+    self._lesion = Lesion(mrmlNodeClass)
+
+  def getLesion(self):
+    return self._lesion
+
+
+class Lesion(object):
+  # maybe even subclass the specific types
+
+  def __init__(self, mrmlNodeClass):
+    self.mrmlNodeClass = mrmlNodeClass
+    self._icon = MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(mrmlNodeClass)
+
+  def getIcon(self):
+    return self._icon
+
+
+class MeasurementToolSelectionDialog(object):
+
+  ICON_MAP = {"slicer.vtkMRMLSegmentationNode": "SegmentEditor.png",
+              "slicer.vtkMRMLAnnotationRulerNode": "Ruler.png",
+              "slicer.vtkMRMLAnnotationRulerNode": "Fiducials.png"}
+
+  def __init__(self):
+    self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self._selectedMRMLNodeClass = None
+    self.setup()
+
+  def setup(self):
+    path = os.path.join(self.modulePath, 'Resources', 'UI', 'MeasurementToolSelectionDialog.ui')
+    self.ui = slicer.util.loadUI(path)
+
+    for bName in ["segmentationButton", "rulerButton", "fiducialButton"]:
+      button = self.ui.findChild(qt.QPushButton, bName)
+      button.setIcon(self.getIconFromMRMLNodeClass(button.property("MRML_NODE_CLASS")))
+      self._connectButton(button)
+
+  def _connectButton(self, button):
+    button.clicked.connect(lambda: setattr(self, "_selectedMRMLNodeClass", button.property("MRML_NODE_CLASS")))
+
+  def exec_(self):
+    return self.ui.exec_()
+
+  @staticmethod
+  def getIconFromMRMLNodeClass(name):
+    modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    return qt.QIcon(os.path.join(modulePath, 'Resources', 'Icons', MeasurementToolSelectionDialog.ICON_MAP[name]))
+
+  def getSelectedMRMLNodeClass(self):
+    return self._selectedMRMLNodeClass
+
+class MeasurementWidgetFactory(object):
+  # TODO: write test
+  # helper class for delivering widget to user with tools
+  def getMeasurementWidget(self, mrmlNodeClass):
+    if mrmlNodeClass is slicer.vtkMRMLSegmentationNode:
+      return CustomSegmentEditorWidget()
+    return None
+
+
+class CustomSegmentEditorWidget(object):
+
   def __init__(self):
     pass
 
-  def rowCount(self):
-    # TODO: implement
-    pass
 
-  def data(self):
-    # TODO: implement
-    pass
+class LesionAssessment(object):
 
-  def addFinding(self, finding):
-    pass
+  def __init__(self):
+    self._location = None
+    self._score = None
 
-  def removeFinding(self, finding):
-    pass
+  def getLocation(self):
+    return self._location
+
+  def getScore(self):
+    return self._score
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
