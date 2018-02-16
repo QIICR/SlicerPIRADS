@@ -128,25 +128,34 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
       finding = Finding("Finding %s" %random.randint(0,10))
       finding.createLesion(measurementSelector.getSelectedMRMLNodeClass())
       self._findingsModel.addFinding(finding)
+      findings = self._findingsModel.findings
+      self._findingsListWidget.selectionModel().clear()
+      self._findingsListWidget.selectionModel().setCurrentIndex(self._findingsModel.index(len(findings)-1, 0),
+                                                                qt.QItemSelectionModel.Select)
+
       self.updateButtons()
 
   def _onRemoveFindingsButtonClicked(self):
     # TODO: if finding is selected, for now only removing last one
-    self._findingsModel.removeFinding(self._findingsModel._findings[-1])
+    index = self._findingsListWidget.selectionModel().selectedIndexes()
+    self._findingsModel.removeFinding(self._findingsModel.findings[index[0].row()])
+    self.updateButtons()
+
+  def onSelectionChanged(self):
     self.updateButtons()
 
   def updateButtons(self):
-    self._removeFindingsButton.setEnabled(self._findingsModel.rowCount())
+    self._removeFindingsButton.setEnabled(self._findingsListWidget.selectedIndexes())
 
 
 class FindingsModel(qt.QAbstractListModel):
 
   def __init__(self, parent=None, *args):
     qt.QAbstractListModel.__init__(self, parent, *args)
-    self._findings = []
+    self.findings = []
 
   def rowCount(self):
-    return len(self._findings)
+    return len(self.findings)
 
   def insertRows(self, row, count, parent=qt.QModelIndex()):
     self.beginInsertRows(parent, row, count)
@@ -158,21 +167,27 @@ class FindingsModel(qt.QAbstractListModel):
 
   def data(self, index, role=qt.Qt.DisplayRole):
     if index.isValid() and role == qt.Qt.DisplayRole:
-      return self._findings[index.row()].getName()
+      return self.findings[index.row()].getName()
     elif role == qt.Qt.DecorationRole:
       # TODO: add custom icon depending on what tool for segmentation was used
-      return self._findings[index.row()].getLesion().getIcon()
+      return self.findings[index.row()].getLesion().getIcon()
     else:
       return None
 
   def addFinding(self, finding):
-    self._findings.append(finding)
+    self.findings.append(finding)
     # TODO: connect to finding events so that the model can be updated on finding changes
-    self.insertRows(len(self._findings)-1, 1)
+    self.insertRows(len(self.findings) - 1, 1)
+
+  def getFinding(self, row):
+    try:
+      return self.findings[row]
+    except IndexError:
+      return None
 
   def removeFinding(self, finding):
-    self.removeRows(self._findings.index(finding), 1)
-    self._findings.pop(self._findings.index(finding))
+    self.removeRows(self.findings.index(finding), 1)
+    self.findings.pop(self.findings.index(finding))
 
 
 class Finding(object):
