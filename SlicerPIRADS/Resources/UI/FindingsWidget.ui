@@ -128,7 +128,7 @@
         </size>
        </property>
        <property name="contextMenuPolicy">
-        <enum>Qt::DefaultContextMenu</enum>
+        <enum>Qt::CustomContextMenu</enum>
        </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>

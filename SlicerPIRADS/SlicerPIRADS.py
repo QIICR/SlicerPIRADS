@@ -115,6 +115,21 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
   def setupConnections(self):
     self._addFindingsButton.clicked.connect(self._onAddFindingsButtonClicked)
     self._removeFindingsButton.clicked.connect(self._onRemoveFindingsButtonClicked)
+    self._findingsListWidget.connect("customContextMenuRequested(QPoint)", self.onFindingItemRightClicked)
+
+  def onFindingItemRightClicked(self, point):
+    self.listMenu = qt.QMenu()
+    menu_item = self.listMenu.addAction("Remove Item")
+    menu_item.triggered.connect(self.menuItemClicked)
+    parentPosition = self._findingsListWidget.mapToGlobal(qt.QPoint(0, 0))
+    self.listMenu.move(parentPosition + point)
+    self.listMenu.show()
+
+  def menuItemClicked(self):
+    currentItem = self._findingsListWidget.currentItem()
+    widget = self._findingsListWidget.itemWidget(currentItem)
+    if slicer.util.confirmYesNoDisplay("Finding '{}' is about to be deleted. Do you want to proceed?".format(widget.getFinding().getName())):
+      self._findingsListWidget.model().removeRow(self._findingsListWidget.row(currentItem))
 
   def _onAddFindingsButtonClicked(self):
     # TODO: findings assessment
@@ -161,6 +176,9 @@ class FindingItemWidget(qt.QWidget):
     self._finding = finding
     self.setup()
     self._processData()
+
+  def getFinding(self):
+    return self._finding
 
   def setup(self):
     self.setLayout(qt.QGridLayout())
