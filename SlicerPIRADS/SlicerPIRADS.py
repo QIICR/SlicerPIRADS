@@ -1,9 +1,10 @@
 import slicer
 import os
 import qt
+import vtk
 from slicer.ScriptedLoadableModule import *
 
-from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ParameterNodeObservationMixin, ModuleLogicMixin
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
 
@@ -97,8 +98,6 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.setupConnections()
 
   def setup(self):
-    self._findingsModel = FindingsModel()
-
     self._assessmentFormWidget = None
 
     self.setLayout(qt.QGridLayout())
@@ -110,8 +109,7 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.ui = slicer.util.loadUI(path)
     self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
     self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
-    self._findingsListWidget = self.ui.findChild(qt.QListView, "findingsListView")
-    self._findingsListWidget.setModel(self._findingsModel)
+    self._findingsListWidget = self.ui.findChild(qt.QListWidget, "findingsListWidget")
     self.updateButtons()
 
   def setupConnections(self):
@@ -126,11 +124,18 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
       # show widget and activate tool
       import random
       finding = Finding("Finding %s" %random.randint(0,10))
-      finding.createLesion(measurementSelector.getSelectedMRMLNodeClass())
-      self._findingsModel.addFinding(finding)
-      findings = self._findingsModel.findings
+      finding.createLesion(slicer.mrmlScene.CreateNodeByClass(measurementSelector.getSelectedMRMLNodeClass()))
+
+      listWidgetItem = qt.QListWidgetItem(self._findingsListWidget)
+      self._findingsListWidget.addItem(listWidgetItem)
+      findingsItemWidget = FindingItemWidget(finding)
+      print findingsItemWidget.sizeHint
+      listWidgetItem.setSizeHint(findingsItemWidget.sizeHint)
+      self._findingsListWidget.setItemWidget(listWidgetItem, findingsItemWidget)
+
       self._findingsListWidget.selectionModel().clear()
-      self._findingsListWidget.selectionModel().setCurrentIndex(self._findingsModel.index(len(findings)-1, 0),
+      model = self._findingsListWidget.model()
+      self._findingsListWidget.selectionModel().setCurrentIndex(model.index(model.rowCount()-1, 0),
                                                                 qt.QItemSelectionModel.Select)
 
       self.updateButtons()
@@ -138,7 +143,7 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
   def _onRemoveFindingsButtonClicked(self):
     # TODO: if finding is selected, for now only removing last one
     index = self._findingsListWidget.selectionModel().selectedIndexes()
-    self._findingsModel.removeFinding(self._findingsModel.findings[index[0].row()])
+    self._findingsListWidget.model().removeRow(index[0].row())
     self.updateButtons()
 
   def onSelectionChanged(self):
@@ -148,53 +153,44 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self._removeFindingsButton.setEnabled(self._findingsListWidget.selectedIndexes())
 
 
-class FindingsModel(qt.QAbstractListModel):
+class FindingItemWidget(qt.QWidget):
 
-  def __init__(self, parent=None, *args):
-    qt.QAbstractListModel.__init__(self, parent, *args)
-    self.findings = []
+  def __init__(self, finding):
+    super(FindingItemWidget, self).__init__()
+    self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self._finding = finding
+    self.setup()
+    self._processData()
 
-  def rowCount(self):
-    return len(self.findings)
+  def setup(self):
+    self.setLayout(qt.QGridLayout())
+    path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingItemWidget.ui')
+    self.ui = slicer.util.loadUI(path)
 
-  def insertRows(self, row, count, parent=qt.QModelIndex()):
-    self.beginInsertRows(parent, row, count)
-    self.endInsertRows()
+    self._measurementTypeLabel = self.ui.findChild(qt.QLabel, "measurementTypeLabel")
+    self._findingNameLabel = self.ui.findChild(qt.QLabel, "findingNameLabel")
+    self._locationLabel = self.ui.findChild(qt.QLabel, "locationLabel")
+    self._measurementLabel = self.ui.findChild(qt.QLabel, "measurementLabel")
 
-  def removeRows(self, row, count, parent=qt.QModelIndex()):
-    self.beginRemoveRows(parent, row, count)
-    self.endRemoveRows()
+    self.layout().addWidget(self.ui)
 
-  def data(self, index, role=qt.Qt.DisplayRole):
-    if index.isValid() and role == qt.Qt.DisplayRole:
-      return self.findings[index.row()].getName()
-    elif role == qt.Qt.DecorationRole:
-      # TODO: add custom icon depending on what tool for segmentation was used
-      return self.findings[index.row()].getLesion().getIcon()
-    else:
-      return None
+  def _processData(self):
+    icon = self._finding.getIcon()
+    self._measurementTypeLabel.setPixmap(icon.pixmap(qt.QSize(32, 32)))
 
-  def addFinding(self, finding):
-    self.findings.append(finding)
-    # TODO: connect to finding events so that the model can be updated on finding changes
-    self.insertRows(len(self.findings) - 1, 1)
-
-  def getFinding(self, row):
-    try:
-      return self.findings[row]
-    except IndexError:
-      return None
-
-  def removeFinding(self, finding):
-    self.removeRows(self.findings.index(finding), 1)
-    self.findings.pop(self.findings.index(finding))
+    self._findingNameLabel.text = self._finding.getName()
+    self._locationLabel.text = self._finding.getLocation()
+    self._measurementLabel.text = str(self._finding.getMeasurementValue())
 
 
-class Finding(object):
+class Finding(ParameterNodeObservationMixin):
+
+  DataChangedEvent = vtk.vtkCommand.UserEvent + 201
 
   def __init__(self, name):
     self._name = name
     self._assessment = None
+    self._lesion = None
     # TODO: assessment holds data like location and score
 
   def __del__(self):
@@ -209,29 +205,48 @@ class Finding(object):
   def getName(self):
     return self._name
 
-  def createLesion(self, mrmlNodeClass):
-    self._lesion = Lesion(mrmlNodeClass)
+  def createLesion(self, mrmlNode):
+    self._lesion = Lesion(mrmlNode)
+    self._lesion.addEventObserver(self._lesion.DataChangedEvent,
+                                  lambda caller, event: self.invokeEvent(self._lesion.DataChangedEvent))
 
   def getLesion(self):
     return self._lesion
 
+  def getIcon(self):
+    if self._lesion:
+      return self._lesion.getIcon()
+    return None
 
-class Lesion(object):
+  def getLocation(self):
+    # TODO: implement
+    return ""
+
+  def getMeasurementValue(self):
+    return self._lesion.getMeasurement()
+
+
+class Lesion(ParameterNodeObservationMixin):
   # maybe even subclass the specific types
 
-  def __init__(self, mrmlNodeClass):
-    self.mrmlNodeClass = mrmlNodeClass
-    self._icon = MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(mrmlNodeClass)
+  DataChangedEvent = vtk.vtkCommand.UserEvent + 201
+
+  def __init__(self, mrmlNode):
+    self.mrmlNode = type(mrmlNode)
+    self._icon = MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(mrmlNode.__class__.__name__)
 
   def getIcon(self):
     return self._icon
 
+  def getMeasurement(self):
+    return 0.0
+
 
 class MeasurementToolSelectionDialog(object):
 
-  ICON_MAP = {"slicer.vtkMRMLSegmentationNode": "SegmentEditor.png",
-              "slicer.vtkMRMLAnnotationRulerNode": "Ruler.png",
-              "slicer.vtkMRMLAnnotationRulerNode": "Fiducials.png"}
+  ICON_MAP = {"vtkMRMLSegmentationNode": "SegmentEditor.png",
+              "vtkMRMLAnnotationRulerNode": "Ruler.png",
+              "vtkMRMLAnnotationRulerNode": "Fiducials.png"}
 
   def __init__(self):
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))

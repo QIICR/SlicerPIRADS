@@ -22,7 +22,7 @@
   <property name="windowTitle">
    <string>Measurement Tool Selection</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -56,7 +56,7 @@
        </size>
       </property>
       <property name="MRML_NODE_CLASS" stdset="0">
-       <string>slicer.vtkMRMLAnnotationRulerNode</string>
+       <string>vtkMRMLAnnotationRulerNode</string>
       </property>
      </widget>
     </item>
@@ -81,7 +81,7 @@
        </size>
       </property>
       <property name="MRML_NODE_CLASS" stdset="0">
-       <string>slicer.vtkMRMLSegmentationNode</string>
+       <string>vtkMRMLSegmentationNode</string>
       </property>
      </widget>
     </item>
@@ -109,16 +109,12 @@
        </size>
       </property>
       <property name="MRML_NODE_CLASS" stdset="0">
-       <string>slicer.vtkMRMLAnnotationRulerNode</string>
+       <string>vtkMRMLAnnotationRulerNode</string>
       </property>
      </widget>
     </item>
    </layout>
   </widget>
-  <zorder>horizontalLayoutWidget</zorder>
-  <zorder>fiducialButton</zorder>
-  <zorder>rulerButton</zorder>
-  <zorder>segmentationButton</zorder>
  </widget>
  <resources/>
  <connections>
