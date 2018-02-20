@@ -2,9 +2,11 @@ import slicer
 import os
 import qt
 import vtk
+import logging
 from slicer.ScriptedLoadableModule import *
 
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ParameterNodeObservationMixin, ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.decorators import logmethod
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
 
@@ -53,7 +55,6 @@ class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
     qt.QWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self.setup()
-    self.setupConnections()
 
   def setup(self):
     self._assessmentFormWidget = None
@@ -61,6 +62,7 @@ class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
     self.setLayout(qt.QGridLayout())
     self._loadUI()
     self.layout().addWidget(self.ui)
+    self._setupConnections()
 
   def _loadUI(self):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'StudyLevelAssessmentWidget.ui')
@@ -68,8 +70,12 @@ class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
     self._studyLevelAssessmentButton = self.ui.findChild(qt.QPushButton, "studyLevelAssessmentButton")
     self._studyAssessmentListView = self.ui.findChild(qt.QListView, "studyAssessmentView")
 
-  def setupConnections(self):
+  def _setupConnections(self):
     self._studyLevelAssessmentButton.clicked.connect(self._onStudyAssessmentButtonClicked)
+    self.destroyed.connect(self._cleanupConnections)
+
+  def _cleanupConnections(self):
+    self._studyLevelAssessmentButton.clicked.disconnect(self._onStudyAssessmentButtonClicked)
 
   def _onStudyAssessmentButtonClicked(self):
     if self._studyAssessmentListView.count != 0:
@@ -95,7 +101,6 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     qt.QWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self.setup()
-    self.setupConnections()
 
   def setup(self):
     self._assessmentFormWidget = None
@@ -103,6 +108,7 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.setLayout(qt.QGridLayout())
     self._loadUI()
     self.layout().addWidget(self.ui)
+    self._setupConnections()
 
   def _loadUI(self):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingsWidget.ui')
@@ -110,26 +116,35 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
     self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
     self._findingsListWidget = self.ui.findChild(qt.QListWidget, "findingsListWidget")
-    self.updateButtons()
+    self._updateButtons()
 
-  def setupConnections(self):
+  def _setupConnections(self):
     self._addFindingsButton.clicked.connect(self._onAddFindingsButtonClicked)
-    self._removeFindingsButton.clicked.connect(self._onRemoveFindingsButtonClicked)
-    self._findingsListWidget.connect("customContextMenuRequested(QPoint)", self.onFindingItemRightClicked)
+    self._removeFindingsButton.clicked.connect(self._onRemoveFindingRequested)
+    self._findingsListWidget.connect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
+    self.destroyed.connect(self._cleanupConnections)
 
-  def onFindingItemRightClicked(self, point):
+  def _cleanupConnections(self):
+    self._addFindingsButton.clicked.disconnect(self._onAddFindingsButtonClicked)
+    self._removeFindingsButton.clicked.disconnect(self._onRemoveFindingRequested)
+    self._findingsListWidget.disconnect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
+
+  def _onFindingItemRightClicked(self, point):
+    if not self._findingsListWidget.currentItem():
+      return
     self.listMenu = qt.QMenu()
     menu_item = self.listMenu.addAction("Remove Item")
-    menu_item.triggered.connect(self.menuItemClicked)
+    menu_item.triggered.connect(self._onRemoveFindingRequested)
     parentPosition = self._findingsListWidget.mapToGlobal(qt.QPoint(0, 0))
     self.listMenu.move(parentPosition + point)
     self.listMenu.show()
 
-  def menuItemClicked(self):
+  def _onRemoveFindingRequested(self):
     currentItem = self._findingsListWidget.currentItem()
     widget = self._findingsListWidget.itemWidget(currentItem)
     if slicer.util.confirmYesNoDisplay("Finding '{}' is about to be deleted. Do you want to proceed?".format(widget.getFinding().getName())):
       self._findingsListWidget.model().removeRow(self._findingsListWidget.row(currentItem))
+      self._updateButtons()
 
   def _onAddFindingsButtonClicked(self):
     # TODO: findings assessment
@@ -153,18 +168,12 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
       self._findingsListWidget.selectionModel().setCurrentIndex(model.index(model.rowCount()-1, 0),
                                                                 qt.QItemSelectionModel.Select)
 
-      self.updateButtons()
+      self._updateButtons()
 
-  def _onRemoveFindingsButtonClicked(self):
-    # TODO: if finding is selected, for now only removing last one
-    index = self._findingsListWidget.selectionModel().selectedIndexes()
-    self._findingsListWidget.model().removeRow(index[0].row())
-    self.updateButtons()
+  def _onSelectionChanged(self):
+    self._updateButtons()
 
-  def onSelectionChanged(self):
-    self.updateButtons()
-
-  def updateButtons(self):
+  def _updateButtons(self):
     self._removeFindingsButton.setEnabled(self._findingsListWidget.selectedIndexes())
 
 
