@@ -2,6 +2,7 @@ import slicer
 import os
 import qt
 import vtk
+import ctk
 import logging
 from slicer.ScriptedLoadableModule import *
 
@@ -9,6 +10,7 @@ from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModul
 from SlicerDevelopmentToolboxUtils.decorators import logmethod
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
+from SegmentEditor import SegmentEditorWidget
 
 
 class SlicerPIRADS(ScriptedLoadableModule):
@@ -47,6 +49,12 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._findingsWidget)
     self.layout.addStretch(1)
+
+
+class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
+
+  def __init__(self):
+    ScriptedLoadableModuleLogic.__init__(self)
 
 
 class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
@@ -104,6 +112,7 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
 
   def setup(self):
     self._assessmentFormWidget = None
+    self._currentMeasurementWidget = None
 
     self.setLayout(qt.QGridLayout())
     self._loadUI()
@@ -116,18 +125,22 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
     self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
     self._findingsListWidget = self.ui.findChild(qt.QListWidget, "findingsListWidget")
+    self._measurementWidgetFrame = self.ui.findChild(qt.QFrame, "measurementWidgetFrame")
+    self._measurementWidgetFrame.setLayout(qt.QGridLayout())
     self._updateButtons()
 
   def _setupConnections(self):
     self._addFindingsButton.clicked.connect(self._onAddFindingsButtonClicked)
     self._removeFindingsButton.clicked.connect(self._onRemoveFindingRequested)
     self._findingsListWidget.connect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
+    self._findingsListWidget.itemSelectionChanged.connect(self._onSelectionChanged)
     self.destroyed.connect(self._cleanupConnections)
 
   def _cleanupConnections(self):
     self._addFindingsButton.clicked.disconnect(self._onAddFindingsButtonClicked)
     self._removeFindingsButton.clicked.disconnect(self._onRemoveFindingRequested)
     self._findingsListWidget.disconnect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
+    self._findingsListWidget.itemSelectionChanged.disconnect(self._onSelectionChanged)
 
   def _onFindingItemRightClicked(self, point):
     if not self._findingsListWidget.currentItem():
@@ -148,18 +161,15 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
 
   def _onAddFindingsButtonClicked(self):
     # TODO: findings assessment
-    # TODO: add segmentation and enable editor
     measurementSelector = MeasurementToolSelectionDialog()
     if measurementSelector.exec_():
-      # show widget and activate tool
       import random
-      finding = Finding("Finding %s" %random.randint(0,10))
-      finding.createLesion(slicer.mrmlScene.CreateNodeByClass(measurementSelector.getSelectedMRMLNodeClass()))
+      finding = Finding()
+      finding.createLesion("Finding %s" %random.randint(0,10), measurementSelector.getSelectedMRMLNodeClass())
 
       listWidgetItem = qt.QListWidgetItem(self._findingsListWidget)
       self._findingsListWidget.addItem(listWidgetItem)
       findingsItemWidget = FindingItemWidget(finding)
-      print findingsItemWidget.sizeHint
       listWidgetItem.setSizeHint(findingsItemWidget.sizeHint)
       self._findingsListWidget.setItemWidget(listWidgetItem, findingsItemWidget)
 
@@ -171,7 +181,23 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
       self._updateButtons()
 
   def _onSelectionChanged(self):
+    # TODO: jump to centroid of lesion
     self._updateButtons()
+    self._deleteCurrentToolFrameWidget()
+    self._displayMeasurementToolForSelectedFinding()
+
+  def _displayMeasurementToolForSelectedFinding(self):
+    currentItem = self._findingsListWidget.currentItem()
+    if currentItem:
+      widget = self._findingsListWidget.itemWidget(currentItem)
+      finding = widget.getFinding()
+      self._currentMeasurementWidget = \
+        MeasurementWidgetFactory.getMeasurementWidgetForMRMLNode(finding.getLesion().mrmlNode)(parent=self._measurementWidgetFrame,
+                                                                                               finding=finding)
+
+  def _deleteCurrentToolFrameWidget(self):
+    if self._currentMeasurementWidget:
+      self._currentMeasurementWidget.delete()
 
   def _updateButtons(self):
     self._removeFindingsButton.setEnabled(self._findingsListWidget.selectedIndexes())
@@ -183,6 +209,7 @@ class FindingItemWidget(qt.QWidget):
     super(FindingItemWidget, self).__init__()
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._finding = finding
+    self._finding.addEventObserver(self._finding.DataChangedEvent, self._processData)
     self.setup()
     self._processData()
 
@@ -201,7 +228,7 @@ class FindingItemWidget(qt.QWidget):
 
     self.layout().addWidget(self.ui)
 
-  def _processData(self):
+  def _processData(self, caller=None, event=None):
     icon = self._finding.getIcon()
     self._measurementTypeLabel.setPixmap(icon.pixmap(qt.QSize(32, 32)))
 
@@ -214,31 +241,28 @@ class Finding(ParameterNodeObservationMixin):
 
   DataChangedEvent = vtk.vtkCommand.UserEvent + 201
 
-  def __init__(self, name):
-    self._name = name
+  def __init__(self):
     self._assessment = None
     self._lesion = None
     # TODO: assessment holds data like location and score
 
+  @logmethod(logging.INFO)
   def __del__(self):
-    # remove lesion
-    # if self._lesion:
-    #   slicer.mrmlScene.RemoveNode(self._lesion)
-    pass
+    if self._lesion:
+      self._lesion.delete()
 
-  def setName(self, name):
-    self._name = name
-
-  def getName(self):
-    return self._name
-
-  def createLesion(self, mrmlNode):
-    self._lesion = Lesion(mrmlNode)
-    self._lesion.addEventObserver(self._lesion.DataChangedEvent,
-                                  lambda caller, event: self.invokeEvent(self._lesion.DataChangedEvent))
+  def createLesion(self, name, mrmlNodeClass):
+    self._lesion = LesionFactory.getLesionClassForMRMLNodeClass(mrmlNodeClass)(name)
+    self._lesion.addEventObserver(self._lesion.DataChangedEvent, self.onLesionDataChanged)
 
   def getLesion(self):
     return self._lesion
+
+  def getName(self):
+    return self._lesion.getName()
+
+  def setName(self, name):
+    self._lesion.setName(name)
 
   def getIcon(self):
     if self._lesion:
@@ -252,21 +276,75 @@ class Finding(ParameterNodeObservationMixin):
   def getMeasurementValue(self):
     return self._lesion.getMeasurement()
 
+  def onLesionDataChanged(self, caller, event):
+    self.invokeEvent(self.DataChangedEvent)
 
-class Lesion(ParameterNodeObservationMixin):
-  # maybe even subclass the specific types
+
+class LesionFactory(object):
+
+  @staticmethod
+  def getLesionClassForMRMLNodeClass(mrmlNodeClass):
+    if mrmlNodeClass == "vtkMRMLSegmentationNode":
+      return SegmentationLesion
+    return None
+
+
+class LesionBase(ParameterNodeObservationMixin):
 
   DataChangedEvent = vtk.vtkCommand.UserEvent + 201
+  MRML_NODE_CLASS = None
 
-  def __init__(self, mrmlNode):
-    self.mrmlNode = type(mrmlNode)
-    self._icon = MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(mrmlNode.__class__.__name__)
+  def __init__(self, name):
+    if not self.MRML_NODE_CLASS:
+      raise ValueError("MRML_NODE_CLASS needs to be defined for all inheriting classes of {}".format(self.__class__.__name__))
+    self._name = name
+    self.mrmlNode = slicer.mrmlScene.AddNewNodeByClass(self.MRML_NODE_CLASS)
+    self._icon = MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(self.MRML_NODE_CLASS)
+
+  @logmethod(logging.INFO)
+  def delete(self):
+    if self.mrmlNode:
+      slicer.mrmlScene.RemoveNode(self.mrmlNode)
 
   def getIcon(self):
     return self._icon
 
   def getMeasurement(self):
+    raise NotImplementedError
+
+  def getName(self):
+    raise NotImplementedError
+
+  def setName(self, name):
+    raise NotImplementedError
+
+
+class SegmentationLesion(LesionBase):
+
+  MRML_NODE_CLASS = "vtkMRMLSegmentationNode"
+
+  def __init__(self, name):
+    super(SegmentationLesion, self).__init__(name)
+    self._createAndObserveSegment()
+
+  def _createAndObserveSegment(self):
+    import vtkSegmentationCorePython as vtkSegmentationCore
+    segment = vtkSegmentationCore.vtkSegment()
+    segment.SetName(self._name)
+    self.mrmlNode.GetSegmentation().AddSegment(segment)
+    self.mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onSegmentModified)
+
+  def getMeasurement(self):
     return 0.0
+
+  def setName(self, name):
+    return self.mrmlNode.GetSegmentation().GetNthSegment(0).SetName(name)
+
+  def getName(self):
+    return self.mrmlNode.GetSegmentation().GetNthSegment(0).GetName()
+
+  def _onSegmentModified(self, caller, event):
+    self.invokeEvent(self.DataChangedEvent)
 
 
 class MeasurementToolSelectionDialog(object):
@@ -300,22 +378,47 @@ class MeasurementToolSelectionDialog(object):
     modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     return qt.QIcon(os.path.join(modulePath, 'Resources', 'Icons', MeasurementToolSelectionDialog.ICON_MAP[name]))
 
+  @staticmethod
+  def getIconFromMRMLNode(mrmlNode):
+    return MeasurementToolSelectionDialog.getIconFromMRMLNodeClass(mrmlNode.__class__.__name__)
+
   def getSelectedMRMLNodeClass(self):
     return self._selectedMRMLNodeClass
+
 
 class MeasurementWidgetFactory(object):
   # TODO: write test
   # helper class for delivering widget to user with tools
-  def getMeasurementWidget(self, mrmlNodeClass):
-    if mrmlNodeClass is slicer.vtkMRMLSegmentationNode:
-      return CustomSegmentEditorWidget()
-    return None
+
+  @staticmethod
+  def getMeasurementWidgetForMRMLNode(mrmlNode):
+    if mrmlNode.__class__.__name__ == "vtkMRMLSegmentationNode":
+      return SegmentEditorMeasurementWidget
 
 
-class CustomSegmentEditorWidget(object):
+class SegmentEditorMeasurementWidget(SegmentEditorWidget):
 
-  def __init__(self):
-    pass
+  def __init__(self, parent, finding):
+    super(SegmentEditorMeasurementWidget, self).__init__(parent)
+    self.parameterSetNode = None
+    self.setup()
+    self._finding = finding
+    lesion = finding.getLesion()
+    self.editor.setSegmentationNode(lesion.mrmlNode)
+
+  def setup(self):
+    super(SegmentEditorMeasurementWidget, self).setup()
+    if self.developerMode:
+      self.reloadCollapsibleButton.hide()
+    self.editor.switchToSegmentationsButtonVisible = False
+    self.editor.segmentationNodeSelectorVisible = False
+    self.editor.setEffectButtonStyle(qt.Qt.ToolButtonIconOnly)
+    self.editor.findChild(qt.QPushButton, "AddSegmentButton").hide()
+    self.editor.findChild(qt.QPushButton, "RemoveSegmentButton").hide()
+    self.editor.findChild(ctk.ctkMenuButton, "Show3DButton").hide()
+
+  def delete(self):
+    self.editor.delete()
 
 
 class LesionAssessment(object):
@@ -329,12 +432,6 @@ class LesionAssessment(object):
 
   def getScore(self):
     return self._score
-
-
-class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
-
-  def __init__(self):
-    ScriptedLoadableModuleLogic.__init__(self)
 
 
 class SlicerPIRADSSlicelet(qt.QWidget):
