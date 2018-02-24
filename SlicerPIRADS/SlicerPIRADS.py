@@ -44,7 +44,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-    self._studyAssessmentWidget = SlicerPIRADSStudyLevelAssessmentWidget()
+    self._studyAssessmentWidget = StudyAssessmentWidget()
     self._findingsWidget = SlicerPIRADSSFindingsWidget()
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._findingsWidget)
@@ -57,7 +57,7 @@ class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
     ScriptedLoadableModuleLogic.__init__(self)
 
 
-class SlicerPIRADSStudyLevelAssessmentWidget(qt.QWidget, GeneralModuleMixin):
+class StudyAssessmentWidget(qt.QWidget, GeneralModuleMixin):
 
   def __init__(self, parent=None):
     qt.QWidget.__init__(self, parent)
@@ -223,18 +223,78 @@ class FindingItemWidget(qt.QWidget):
 
     self._measurementTypeLabel = self.ui.findChild(qt.QLabel, "measurementTypeLabel")
     self._findingNameLabel = self.ui.findChild(qt.QLabel, "findingNameLabel")
-    self._locationLabel = self.ui.findChild(qt.QLabel, "locationLabel")
+    self._sectorsLabel = self.ui.findChild(qt.QLabel, "sectorsLabel")
     self._measurementLabel = self.ui.findChild(qt.QLabel, "measurementLabel")
-
+    self._prostateMapButton = self.ui.findChild(qt.QPushButton, "prostateMapButton")
+    self._prostateMapDialog = None
     self.layout().addWidget(self.ui)
+    self.setupConnections()
+
+  def setupConnections(self):
+    self._prostateMapButton.clicked.connect(self._onProstateMapButtonClicked)
+    self.destroyed.connect(self._cleanupConnections)
+
+  def _cleanupConnections(self):
+    self._prostateMapButton.clicked.disconnect(self._onProstateMapButtonClicked)
+
+  def _onProstateMapButtonClicked(self):
+    if not self._prostateMapDialog:
+      self._prostateMapDialog = ProstateSectorMapDialog()
+
+    self._prostateMapDialog.setSelectedSectors(self._finding.getSectors())
+
+    if self._prostateMapDialog.exec_():
+      print "daslkdaskl"
+      self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
   def _processData(self, caller=None, event=None):
     icon = self._finding.getIcon()
     self._measurementTypeLabel.setPixmap(icon.pixmap(qt.QSize(32, 32)))
 
     self._findingNameLabel.text = self._finding.getName()
-    self._locationLabel.text = self._finding.getLocation()
+    self._sectorsLabel.text = ",".join(self._finding.getSectors())
     self._measurementLabel.text = str(self._finding.getMeasurementValue())
+
+    self._prostateMapButton.setIconSize(qt.QSize(20, 32))
+    self._prostateMapButton.setIcon(qt.QIcon(os.path.join(self.modulePath, 'Resources', 'Icons', 'ProstateMap.png')))
+
+
+class ProstateSectorMapDialog(object):
+
+  def __init__(self):
+    self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self.setup()
+
+  def setup(self):
+    path = os.path.join(self.modulePath, 'Resources', 'UI', 'ProstateSectorMapDialog.ui')
+    self.ui = slicer.util.loadUI(path)
+    self._backgroundLabel = self.ui.findChild(qt.QLabel, "prostateSectorMap")
+    self._sectorButtonGroup = self.ui.findChild(qt.QButtonGroup, "sectorButtonGroup")
+    self._dialogButtonBox = self.ui.findChild(qt.QDialogButtonBox, "dialogButtonBox")
+    icon = qt.QIcon(os.path.join(self.modulePath, 'Resources', 'Images', 'prostate_sector_map.png'))
+    self._backgroundLabel.setPixmap(icon.pixmap(qt.QSize(622, 850)))
+    self._setupConnections()
+
+  def exec_(self):
+    return self.ui.exec_()
+
+  def _setupConnections(self):
+    self._dialogButtonBox.clicked.connect(self._onButtonClicked)
+
+  def getSelectedSectors(self):
+    return [b.objectName for b in self._sectorButtonGroup.buttons() if b.checked]
+
+  def setSelectedSectors(self, sectors):
+    for b in self._sectorButtonGroup.buttons():
+        b.checked = b.objectName in sectors
+
+  def resetButtons(self):
+    for b in self._sectorButtonGroup.buttons():
+      b.checked = False
+
+  def _onButtonClicked(self, button):
+    if self._dialogButtonBox.buttonRole(button) == qt.QDialogButtonBox.ResetRole:
+      self.resetButtons()
 
 
 class Finding(ParameterNodeObservationMixin):
@@ -244,6 +304,7 @@ class Finding(ParameterNodeObservationMixin):
   def __init__(self):
     self._assessment = None
     self._lesion = None
+    self._sectors = []
     # TODO: assessment holds data like location and score
 
   @logmethod(logging.INFO)
@@ -269,9 +330,13 @@ class Finding(ParameterNodeObservationMixin):
       return self._lesion.getIcon()
     return None
 
-  def getLocation(self):
-    # TODO: implement
-    return ""
+  def getSectors(self):
+    return self._sectors
+
+  def setSectors(self, sectors):
+    print "finding.setSectors"
+    self._sectors = sectors
+    self.invokeEvent(self.DataChangedEvent)
 
   def getMeasurementValue(self):
     return self._lesion.getMeasurement()
@@ -416,6 +481,7 @@ class SegmentEditorMeasurementWidget(SegmentEditorWidget):
     self.editor.findChild(qt.QPushButton, "AddSegmentButton").hide()
     self.editor.findChild(qt.QPushButton, "RemoveSegmentButton").hide()
     self.editor.findChild(ctk.ctkMenuButton, "Show3DButton").hide()
+    self.editor.findChild(ctk.ctkExpandableWidget, "SegmentsTableResizableFrame").hide()
 
   def delete(self):
     self.editor.delete()
