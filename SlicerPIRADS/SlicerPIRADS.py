@@ -244,7 +244,6 @@ class FindingItemWidget(qt.QWidget):
     self._prostateMapDialog.setSelectedSectors(self._finding.getSectors())
 
     if self._prostateMapDialog.exec_():
-      print "daslkdaskl"
       self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
   def _processData(self, caller=None, event=None):
@@ -305,7 +304,6 @@ class Finding(ParameterNodeObservationMixin):
     self._assessment = None
     self._lesion = None
     self._sectors = []
-    # TODO: assessment holds data like location and score
 
   @logmethod(logging.INFO)
   def __del__(self):
@@ -334,7 +332,6 @@ class Finding(ParameterNodeObservationMixin):
     return self._sectors
 
   def setSectors(self, sectors):
-    print "finding.setSectors"
     self._sectors = sectors
     self.invokeEvent(self.DataChangedEvent)
 

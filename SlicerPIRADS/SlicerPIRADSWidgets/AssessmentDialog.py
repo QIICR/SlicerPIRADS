@@ -2,7 +2,7 @@ import qt
 import os
 import slicer
 
-from SlicerPIRADSLogic.FormGeneratorFactory import FormGeneratorFactory
+from SlicerDevelopmentToolboxUtils.forms.FormGeneratorFactory import FormGeneratorFactory
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin
 
 
