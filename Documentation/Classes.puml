@@ -5,56 +5,46 @@ left to right direction
 
 package SlicerPIRADSWidget {
 
-class MultiVolumeExplorerWidget {
-}
+  class MultiVolumeExplorerWidget {
+  }
 
-class AssessmentDialog {
-  + setAssessment(): Assessment
-}
+  class AssessmentDialog {
+    + setAssessment(): Assessment
+  }
 
-AssessmentDialog <|-- StudyAssessmentWidget
-AssessmentDialog <|-- LesionAssessmentWidget
+  class PatientInfoWidget {
+  }
 
-class PatientInfoWidget {
-}
+  class FindingsWidget {
+    - __findingsTable
+    - __measurementToolWidget
+  }
 
-class FindingsWidget {
-  - __findingsTable
-  - __measurementToolWidget
-}
+  class FindingsTable {
+    + createFinding(): Finding
+    + assessLesion():
+  }
 
-FindingsWidget::__findingsTable ..> FindingsTable: has
-FindingsWidget::__measurementToolWidget ..> MeasurementToolWidget: has
+  class MeasurementToolWidget {
+    - __measurementTools: list
+    + addMeasurementTool(MeasurementTool tool)
+    + getMeasurementTools(): list
+    + setActiveMeasurementTool(id): bool
+  }
 
+  '  Connections
 
-class FindingsTable {
-  + createFinding(): Finding
-  + assessLesion():
-}
+  AssessmentDialog <|-- StudyAssessmentWidget
+  AssessmentDialog <|-- LesionAssessmentWidget
 
-class MeasurementToolWidget {
-  - __measurementTools: list
-  + addMeasurementTool(MeasurementTool tool)
-  + getMeasurementTools(): list
-  + setActiveMeasurementTool(id): bool
-}
-
+  FindingsWidget::__findingsTable ..> FindingsTable: has
+  FindingsWidget::__measurementToolWidget ..> MeasurementToolWidget: has
 
 }
 
 class AssessmentHelp {
 
 }
-
-SlicerPIRADSWidget ..> Report: has_a
-
-LesionAssessmentWidget ..> AssessmentHelp
-
-LesionAssessmentWidget ..> LesionAssessment:generated_from
-StudyAssessmentWidget ..> StudyAssessment:generated_from
-
-FindingsTable "1" ..> "0..*" Finding:has/creates
-
 
 interface Assessment {
   - __schema: string
@@ -112,18 +102,26 @@ class Segmentation {
 class Ruler {
 }
 
-MeasurementToolWidget::__measurementTool "1" ..> "1" MeasurementTool: has
-
 interface MeasurementTool {
   +id=None
 }
+
+SlicerPIRADSWidget ..> Report: has_a
+
+LesionAssessmentWidget ..> AssessmentHelp
+
+LesionAssessmentWidget ..> LesionAssessment:generated_from
+StudyAssessmentWidget ..> StudyAssessment:generated_from
+
+FindingsTable "1" ..> "0..*" Finding:has/creates
+
+MeasurementToolWidget::__measurementTool "1" ..> "1" MeasurementTool: has
 
 MeasurementTool <|-- Fiducial
 MeasurementTool <|-- Segmentation
 MeasurementTool <|-- Ruler
 
 MeasurementTool ..> Lesion
-
 
 Finding "1" *-- "1" LesionAssessment: has_a
 Finding "1" *-- "1" Lesion: has_a

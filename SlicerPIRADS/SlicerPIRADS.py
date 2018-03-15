@@ -10,6 +10,7 @@ from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModul
 from SlicerDevelopmentToolboxUtils.decorators import logmethod
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
+from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SegmentEditor import SegmentEditorWidget
 
 
@@ -44,11 +45,37 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
+    self._loadDataButton = UICreationHelpers.createButton("Load Data")
     self._studyAssessmentWidget = StudyAssessmentWidget()
     self._findingsWidget = SlicerPIRADSSFindingsWidget()
+    self.layout.addWidget(self._loadDataButton)
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._findingsWidget)
     self.layout.addStretch(1)
+    self._setupConnections()
+
+  def _setupConnections(self):
+    self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
+
+  def _onLoadButtonClicked(self):
+    self._dataSelectionDialog = DataSelectionDialog()
+    volumeNodes = []
+
+    @vtk.calldata_type(vtk.VTK_OBJECT)
+    def onVolumeNodeAdded(caller, event, callData):
+      if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
+        volumeNodes.append(callData)
+
+    sceneObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, onVolumeNodeAdded)
+    try:
+      if self._dataSelectionDialog.exec_():
+        self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(volumeNodes)
+        if self._hangingProtocol:
+          slicer.app.layoutManager().setLayout(self._hangingProtocol.LAYOUT)
+    except Exception:
+      pass
+    finally:
+      slicer.mrmlScene.RemoveObserver(sceneObserver)
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
@@ -573,3 +600,51 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 if __name__ == "SlicerPIRADSSlicelet":
   slicelet = SlicerPIRADSSlicelet()
 
+
+class HangingProtocolFactory(object):
+
+  @staticmethod
+  def getHangingProtocol(volumeNodes):
+    print len(volumeNodes)
+    if len(volumeNodes) == 4:
+      return PIRADSHangingProtocolP1
+    elif len(volumeNodes) == 6:
+      return PIRADSHangingProtocolP2
+    else:
+      return PIRADSHangingProtocolP3
+
+
+from abc import abstractmethod, ABCMeta
+
+class HangingProtocol(object):
+
+  __metaclass__ = ABCMeta
+
+  SERIES_TYPES = None
+  LAYOUT = None
+
+  def __init__(self, volumeNodes):
+    if not self.SERIES_TYPES or not self.LAYOUT:
+      raise NotImplementedError
+    self._volumeNodes = volumeNodes
+
+  def canHandle(self, seriesTypes):
+    pass
+
+
+class PIRADSHangingProtocolP1(HangingProtocol):
+
+  SERIES_TYPES = ["T2", "ADC", "DWI-b", "SUB"]
+  LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutTwoOverTwoView
+
+
+class PIRADSHangingProtocolP2(HangingProtocol):
+
+  SERIES_TYPES = ["T2 ax", "T2 sag", "T2 cor", "ADC", "DWI-b", "SUB"]
+  LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutThreeOverThreeView
+
+
+class PIRADSHangingProtocolP3(HangingProtocol):
+
+  SERIES_TYPES = ["T2 ax", "T2 sag", "T2 cor", "ADC", "DWI-b", "SUB", "DCE dynamic", "curve"]
+  LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutFourOverFourView

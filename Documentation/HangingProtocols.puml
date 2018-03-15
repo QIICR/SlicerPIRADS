@@ -1,0 +1,32 @@
+@startuml
+
+class HangingProtocolFactory {
+  {static} getHangingProtocol(data): HangingProtocol
+}
+
+HangingProtocolFactory::getHangingProtocol ..> HangingProtocol: returns concrete implementation
+
+
+' Make configurable
+
+abstract class HangingProtocol {
+}
+
+class PIRADSHangingProtocolP1 {
+
+}
+
+class PIRADSHangingProtocolP2 {
+
+}
+
+class PIRADSHangingProtocolP3 {
+
+}
+
+HangingProtocol <|-- PIRADSHangingProtocolP1
+HangingProtocol <|-- PIRADSHangingProtocolP2
+HangingProtocol <|-- PIRADSHangingProtocolP3
+
+
+@enduml

@@ -6,12 +6,20 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/Configuration.py
   SlicerPIRADSWidgets/__init__.py
   SlicerPIRADSWidgets/AssessmentDialog.py
+  SlicerPIRADSWidgets/DataSelectionDialog.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/default.cfg
   Resources/Forms/Clinical_Information.json
   Resources/Forms/Procedure_Information.json
+  Resources/UI/AssessmentDialog.ui
+  Resources/UI/DataSelectionDialog.ui
+  Resources/UI/FindingItemWidget.ui
+  Resources/UI/FindingsWidget.ui
+  Resources/UI/MeasurementToolSelectionDialog.ui
+  Resources/UI/ProstateSectorMapDialog.ui
+  Resources/UI/StudyLevelAssessmentWidget.ui
 )
 
 slicerMacroBuildScriptedModule(
