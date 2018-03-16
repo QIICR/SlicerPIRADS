@@ -6,7 +6,8 @@ import ctk
 import logging
 from slicer.ScriptedLoadableModule import *
 
-from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ParameterNodeObservationMixin, ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ParameterNodeObservationMixin
+from SlicerDevelopmentToolboxUtils.mixins import ModuleWidgetMixin, ModuleLogicMixin
 from SlicerDevelopmentToolboxUtils.decorators import logmethod
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSWidgets.AssessmentDialog import AssessmentDialog
@@ -42,6 +43,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     ScriptedLoadableModuleWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
+    self._loadedVolumeNodes = []
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
@@ -59,23 +61,38 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def _onLoadButtonClicked(self):
     self._dataSelectionDialog = DataSelectionDialog()
-    volumeNodes = []
+    self._loadedVolumeNodes = []
 
-    @vtk.calldata_type(vtk.VTK_OBJECT)
-    def onVolumeNodeAdded(caller, event, callData):
-      if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
-        volumeNodes.append(callData)
-
-    sceneObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, onVolumeNodeAdded)
+    sceneObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self._onVolumeNodeAdded)
     try:
       if self._dataSelectionDialog.exec_():
-        self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(volumeNodes)
+        self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(self._loadedVolumeNodes)
         if self._hangingProtocol:
           slicer.app.layoutManager().setLayout(self._hangingProtocol.LAYOUT)
-    except Exception:
-      pass
+          self._organizeVolumesIntoViews()
+    except Exception as exc:
+      logging.error(exc.message)
     finally:
       slicer.mrmlScene.RemoveObserver(sceneObserver)
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def _onVolumeNodeAdded(self, caller, event, callData):
+    if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
+      self._loadedVolumeNodes.append(callData)
+
+  def _organizeVolumesIntoViews(self):
+    widgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
+    assert len(widgets) >= len(self._loadedVolumeNodes)
+    for idx, widget in enumerate(widgets):
+      try:
+        volume = self._loadedVolumeNodes[idx]
+        widget.mrmlSliceCompositeNode().SetBackgroundVolumeID(volume.GetID())
+        logic = widget.sliceLogic()
+        logic.FitSliceToAll()
+        logic.GetSliceNode().SetOrientationToAxial()
+      except IndexError:
+        break
+
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
@@ -605,7 +622,6 @@ class HangingProtocolFactory(object):
 
   @staticmethod
   def getHangingProtocol(volumeNodes):
-    print len(volumeNodes)
     if len(volumeNodes) == 4:
       return PIRADSHangingProtocolP1
     elif len(volumeNodes) == 6:
@@ -647,4 +663,4 @@ class PIRADSHangingProtocolP2(HangingProtocol):
 class PIRADSHangingProtocolP3(HangingProtocol):
 
   SERIES_TYPES = ["T2 ax", "T2 sag", "T2 cor", "ADC", "DWI-b", "SUB", "DCE dynamic", "curve"]
-  LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutFourOverFourView
+  LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutThreeByThreeSliceView
