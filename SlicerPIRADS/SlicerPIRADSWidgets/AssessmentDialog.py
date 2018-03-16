@@ -29,7 +29,7 @@ class AssessmentDialog(qt.QDialog):
 
     self.formWidgets = list()
     self.setup()
-    self.setupConnections()
+    self._setupConnections()
 
   def setup(self):
     self.setLayout(qt.QGridLayout())
@@ -50,11 +50,16 @@ class AssessmentDialog(qt.QDialog):
     self._nextButton = self.ui.findChild(qt.QPushButton, "nextButton")
     self._buttonBox = self.ui.findChild(qt.QDialogButtonBox, "buttonBox")
 
-  def setupConnections(self):
-    self._buttonBox.accepted.connect(self._onAccept)
-    self._buttonBox.rejected.connect(self._onReject)
-    self._prevButton.clicked.connect(self._onPrevButtonClicked)
-    self._nextButton.clicked.connect(self._onNextButtonClicked)
+  def _setupConnections(self):
+    def setupConnections(funcName="connect"):
+      getattr(self._buttonBox.accepted, funcName)(self._onAccept)
+      getattr(self._buttonBox.rejected, funcName)(self._onReject)
+      getattr(self._prevButton.clicked, funcName)(self._onPrevButtonClicked)
+      getattr(self._nextButton.clicked, funcName)(self._onNextButtonClicked)
+
+    setupConnections()
+    slicer.app.connect('aboutToQuit()', self.deleteLater)
+    self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
 
   def updateNavigationButtons(self):
     self._prevButton.setEnabled(self._currentForm is not None and self._currentForm.hasPrev())
@@ -69,7 +74,6 @@ class AssessmentDialog(qt.QDialog):
   def _onAccept(self):
     # persist data for forms
     self.accept()
-    pass
 
   def _onReject(self):
     self.reject()

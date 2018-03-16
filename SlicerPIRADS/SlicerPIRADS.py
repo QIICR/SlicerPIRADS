@@ -89,10 +89,11 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
         widget.mrmlSliceCompositeNode().SetBackgroundVolumeID(volume.GetID())
         logic = widget.sliceLogic()
         logic.FitSliceToAll()
-        logic.GetSliceNode().SetOrientationToAxial()
+        sliceNode = logic.GetSliceNode()
+        sliceNode.SetOrientationToAxial()
+        sliceNode.RotateToVolumePlane(volume)
       except IndexError:
         break
-
 
 
 class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
@@ -174,17 +175,15 @@ class SlicerPIRADSSFindingsWidget(qt.QWidget, GeneralModuleMixin):
     self._updateButtons()
 
   def _setupConnections(self):
-    self._addFindingsButton.clicked.connect(self._onAddFindingsButtonClicked)
-    self._removeFindingsButton.clicked.connect(self._onRemoveFindingRequested)
-    self._findingsListWidget.connect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
-    self._findingsListWidget.itemSelectionChanged.connect(self._onSelectionChanged)
-    self.destroyed.connect(self._cleanupConnections)
+    def setupConnections(funcName="connect"):
+      getattr(self._addFindingsButton.clicked, funcName)(self._onAddFindingsButtonClicked)
+      getattr(self._removeFindingsButton.clicked, funcName)(self._onRemoveFindingRequested)
+      getattr(self._findingsListWidget, funcName)("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
+      getattr(self._findingsListWidget.itemSelectionChanged, funcName)(self._onSelectionChanged)
 
-  def _cleanupConnections(self):
-    self._addFindingsButton.clicked.disconnect(self._onAddFindingsButtonClicked)
-    self._removeFindingsButton.clicked.disconnect(self._onRemoveFindingRequested)
-    self._findingsListWidget.disconnect("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
-    self._findingsListWidget.itemSelectionChanged.disconnect(self._onSelectionChanged)
+    setupConnections()
+    slicer.app.connect('aboutToQuit()', self.deleteLater)
+    self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
 
   def _onFindingItemRightClicked(self, point):
     if not self._findingsListWidget.currentItem():
@@ -646,6 +645,10 @@ class HangingProtocol(object):
 
   def canHandle(self, seriesTypes):
     pass
+
+
+# TODO: add a Series Type Manager class for assigning series types to volumes and being able to define some rules for
+#       classifying those as specific series
 
 
 class PIRADSHangingProtocolP1(HangingProtocol):

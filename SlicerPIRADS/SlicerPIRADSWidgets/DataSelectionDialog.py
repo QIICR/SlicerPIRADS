@@ -23,64 +23,70 @@ class DataSelectionDialog(qt.QDialog):
     self._progress.hide()
     self._configurePatientTable()
     self._configureStudiesTable()
+    self._configureCommonTableSettings()
     self._setupConnections()
 
   def _configurePatientTable(self):
     self._patientTable = self.ui.findChild(qt.QTableView, "patientsTableView")
     self._patientTableModel = PatientsTableModel()
     self._patientTable.setModel(self._patientTableModel)
-    self._patientTable.setSelectionBehavior(qt.QTableView.SelectRows)
-    self._patientTable.setSelectionMode(qt.QTableView.SingleSelection)
-    self._patientTable.verticalHeader().hide()
-    self._patientTable.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Stretch)
     self._patientTable.horizontalHeader().setSectionResizeMode(0, qt.QHeaderView.Stretch)
     self._patientTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
 
   def _configureStudiesTable(self):
     self._studiesLabel = self.ui.findChild(qt.QLabel, "studiesLabel")
-    self._studiesList = self.ui.findChild(qt.QTableView, "studiesTableView")
-    self._studiesListModel = qt.QStandardItemModel()
-    self._studiesList.setModel(self._studiesListModel)
-    self._studiesList.setSelectionBehavior(qt.QTableView.SelectRows)
-    self._studiesList.setSelectionMode(qt.QTableView.SingleSelection)
-    self._studiesList.setEditTriggers(qt.QAbstractItemView.NoEditTriggers)
-    self._studiesList.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Stretch)
-    self._studiesList.verticalHeader().hide()
-    self._studiesList.horizontalHeader().hide()
+    self._studiesTable = self.ui.findChild(qt.QTableView, "studiesTableView")
+    self._studiesTableModel = qt.QStandardItemModel()
+    self._studiesTable.setModel(self._studiesTableModel)
+    self._studiesTable.setEditTriggers(qt.QAbstractItemView.NoEditTriggers)
+    self._studiesTable.horizontalHeader().hide()
+
+  def _configureCommonTableSettings(self):
+    for table in [self._studiesTable, self._patientTable]:
+      table.setSelectionBehavior(qt.QTableView.SelectRows)
+      table.setSelectionMode(qt.QTableView.SingleSelection)
+      table.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Stretch)
+      table.verticalHeader().hide()
 
   def _setupConnections(self):
-    self._browseButton.clicked.connect(self._onBrowseButtonClicked)
-    self._loadButton.clicked.connect(self._onLoadButtonClicked)
-    self._patientTable.clicked.connect(self._onPatientSelected)
-    self._studiesList.selectionModel().connect('currentChanged(QModelIndex, QModelIndex)', self._onStudySelected)
-    self.destroyed.connect(self._cleanupConnections)
+    def setupConnections(funcName="connect"):
+      getattr(self._browseButton.clicked, funcName)(self._onBrowseButtonClicked)
+      getattr(self._loadButton.clicked, funcName)(self._onLoadButtonClicked)
+      getattr(self._patientTable.selectionModel(), funcName)('currentChanged(QModelIndex, QModelIndex)',
+                                                             self._onPatientSelected)
+      getattr(self._studiesTable.selectionModel(), funcName)('currentChanged(QModelIndex, QModelIndex)',
+                                                             self._onStudySelected)
 
-  def _cleanupConnections(self):
-    self._browseButton.clicked.disconnect(self._onBrowseButtonClicked)
-    self._loadButton.clicked.disconnect(self._onLoadButtonClicked)
-    self._patientTable.clicked.disconnect(self._onPatientSelected)
-    self._studiesList.selectionModel().disconnect('currentChanged(QModelIndex, QModelIndex)', self._onStudySelected)
+    setupConnections()
+    slicer.app.connect('aboutToQuit()', self.deleteLater)
+    self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
 
   def _onPatientSelected(self, modelIndex):
-    self._studiesListModel.clear()
     pid = self._patientTableModel.getPatients()[modelIndex.row()]
-    studies = self._patientTableModel.getStudiesForPatient(pid)
-    for study in studies:
-      sItem = qt.QStandardItem(study)
-      self._studiesListModel.appendRow(sItem)
-    if self._studiesListModel.rowCount() == 1:
-      modelIndex = self._studiesListModel.index(0,0)
-      self._studiesList.selectionModel().select(modelIndex, self._studiesList.selectionModel().Select)
-      self._studiesList.selectionModel().setCurrentIndex(modelIndex, self._studiesList.selectionModel().Select)
+    self._fillStudiesList(pid)
+    if self._studiesTableModel.rowCount() == 1:
+      self._autoSelectFirstStudy()
     else:
       self._loadButton.enabled = False
 
+  def _autoSelectFirstStudy(self):
+    modelIndex = self._studiesTableModel.index(0, 0)
+    self._studiesTable.selectionModel().select(modelIndex, self._studiesTable.selectionModel().Select)
+    self._studiesTable.selectionModel().setCurrentIndex(modelIndex, self._studiesTable.selectionModel().Select)
+
+  def _fillStudiesList(self, pid):
+    self._studiesTableModel.clear()
+    studies = self._patientTableModel.getStudiesForPatient(pid)
+    for study in studies:
+      sItem = qt.QStandardItem(study)
+      self._studiesTableModel.appendRow(sItem)
+
   def _onStudySelected(self, modelIndex):
-    self._loadButton.enabled = DataSelectionLogic.isStudyPIRADSEligible(self._studiesListModel.data(modelIndex))
+    self._loadButton.enabled = DataSelectionLogic.isStudyPIRADSEligible(self._studiesTableModel.data(modelIndex))
 
   def _onLoadButtonClicked(self):
-    modelIndex = self._studiesList.selectionModel().currentIndex
-    series = self.logic.getEligibleSeriesForStudy(self._studiesListModel.data(modelIndex))
+    modelIndex = self._studiesTable.selectionModel().currentIndex
+    series = self.logic.getEligibleSeriesForStudy(self._studiesTableModel.data(modelIndex))
     self._progress.setMaximum(len(series))
     self._progress.show()
 
@@ -167,9 +173,6 @@ class DataSelectionLogic(object):
   def __init__(self):
     pass
 
-  def getPatients(self):
-    pass
-
   @staticmethod
   def isStudyPIRADSEligible(studyID):
     return len(DataSelectionLogic.getEligibleSeriesForStudy(studyID)) > 3
@@ -202,9 +205,6 @@ class DataSelectionLogic(object):
       if string.find(description, d) >= 0:
         return False
     return True
-
-  def loadStudy(self, studyID):
-    pass
 
   def loadSeries(self, files):
     multiVolumeImporterPlugin = MultiVolumeImporterPluginClass()
