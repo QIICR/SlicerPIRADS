@@ -8,130 +8,155 @@ package SlicerPIRADSWidget {
   class MultiVolumeExplorerWidget {
   }
 
-  class AssessmentDialog {
-    + setAssessment(): Assessment
-  }
-
   class PatientInfoWidget {
   }
 
-  class FindingsWidget {
-    - __findingsTable
-    - __measurementToolWidget
+  package Finding {
+    class FindingsWidget {
+      - __findingList
+      - __findingsInformationWidget
+      - __AnnotationToolWidget
+    }
+
+    class FindingsList {
+      + createFinding(): Finding
+      + addAssessment()
+    }
+
+    class AnnotationToolSelectionWidget {
+      - __annotationTools: list
+      + addAnnotationTool(AnnotationTool tool)
+      + getAnnotationTools(): list
+      + setActiveAnnotationTool(id): bool
+    }
+
+    class FindingInformationWidget {
+
+    }
+
+    class AnnotationToolWidget {
+    }
   }
 
-  class FindingsTable {
-    + createFinding(): Finding
-    + assessLesion():
-  }
-
-  class MeasurementToolWidget {
-    - __measurementTools: list
-    + addMeasurementTool(MeasurementTool tool)
-    + getMeasurementTools(): list
-    + setActiveMeasurementTool(id): bool
+  class DataSelectionDialog {
+    # _patientTable
+    # _studiesTable
   }
 
   '  Connections
 
-  AssessmentDialog <|-- StudyAssessmentWidget
-  AssessmentDialog <|-- LesionAssessmentWidget
+  package Assessment {
 
-  FindingsWidget::__findingsTable ..> FindingsTable: has
-  FindingsWidget::__measurementToolWidget ..> MeasurementToolWidget: has
+    class AssessmentDialog {
+      + setAssessment(): Assessment
+    }
+    AssessmentDialog <|-- StudyAssessmentWidget
+    AssessmentDialog <|-- FindingAssessmentWidget
+  }
 
 }
 
-class AssessmentHelp {
 
+package SlicerPIRADSLogic {
+
+  package AssessmentLogic {
+    interface Assessment {
+      - __schema: string
+      - __data=None
+      .. setter ..
+      + loadSchema(fileName)
+      + loadData(string): bool
+      .. getter ..
+      + getSchema(): string
+      + getData(): string
+    }
+
+    class FindingAssessment {
+    }
+
+    class StudyAssessment {
+    }
+  }
+
+  'interface DataHandler {
+  '  + save()
+  '  + load(fileName): bool
+  '}
+  '
+  'class ReportDataHandler {
+  '}
+  'DataHandler <|-- ReportDataHandler
+  'DataHandler <|-- StudyAssessmentHandler
+  '
+  'Assessment -> DataHandler: has_a
+
+
+  class Finding {
+    + createAnnotation(seriesType, mrmlNodeClass): Annotation
+    + getAnnotation(seriesType, mrmlNodeClass): Annotation
+  }
+
+  class Report {
+  - findings: Finding
+  - studyAssessment: StudyAssessment
+  __
+  + startReport(): bool
+  + closeReport(): bool
+  + saveReport(): bool
+  + loadReport(string jsonfilename): bool
+  }
+
+  package AnnotationLogic {
+
+    interface Annotation {
+    - mrmlNode=None
+    - mrmlClass=None
+    __
+    + setMRMLNode(mrmlNode)
+    }
+
+    interface Annotation {
+      +id=None
+    }
+
+    class Fiducial {
+    }
+
+    class Segmentation {
+    }
+
+    class Ruler {
+    }
+  }
 }
 
-interface Assessment {
-  - __schema: string
-  - __data=None
-  .. setter ..
-  + loadSchema(fileName)
-  + loadData(string): bool
-  .. getter ..
-  + getSchema(): string
-  + getData(): string
-}
-
-'interface DataHandler {
-'  + save()
-'  + load(fileName): bool
-'}
-'
-'class ReportDataHandler {
-'}
-'DataHandler <|-- ReportDataHandler
-'DataHandler <|-- StudyAssessmentHandler
-'
-'Assessment -> DataHandler: has_a
-
-class LesionAssessment {
-  -lesion: Lesion
-}
-
-class StudyAssessment {
-}
-
-class Report {
-- findings: Finding
-- studyAssessment: StudyAssessment
-__
-+ startReport(): bool
-+ closeReport(): bool
-+ saveReport(): bool
-+ loadReport(string jsonfilename): bool
-}
-
-interface Lesion {
-- mrmlNode=None
-- mrmlClass=None
-__
-+ setMRMLNode(mrmlNode)
-}
-
-class Fiducial {
-}
-
-class Segmentation {
-}
-
-class Ruler {
-}
-
-interface MeasurementTool {
-  +id=None
-}
 
 SlicerPIRADSWidget ..> Report: has_a
 
-LesionAssessmentWidget ..> AssessmentHelp
+'FindingAssessmentWidget ..> AssessmentHelp
 
-LesionAssessmentWidget ..> LesionAssessment:generated_from
+FindingAssessmentWidget ..> FindingAssessment:generated_from
 StudyAssessmentWidget ..> StudyAssessment:generated_from
 
-FindingsTable "1" ..> "0..*" Finding:has/creates
+FindingsList "1" ..> "0..*" Finding:has/creates
+FindingsWidget ..> FindingInformationWidget: has
+FindingsWidget::_AnnotationToolWidget ..> AnnotationToolWidget: has
+FindingsWidget::__FindingsList ..> FindingsList: has
 
-MeasurementToolWidget::__measurementTool "1" ..> "1" MeasurementTool: has
+Annotation <|-- Fiducial
+Annotation <|-- Segmentation
+Annotation <|-- Ruler
 
-MeasurementTool <|-- Fiducial
-MeasurementTool <|-- Segmentation
-MeasurementTool <|-- Ruler
+FindingInformationWidget "1" .> "n" AnnotationToolSelectionWidget: has
 
-MeasurementTool ..> Lesion
 
-Finding "1" *-- "1" LesionAssessment: has_a
-Finding "1" *-- "1" Lesion: has_a
-LesionAssessment::lesion "1" ..> "1" Lesion: has_a
-
+Finding "1" *-- "1" FindingAssessment: has_a
+Finding::_annotations "1" *-- "n" Annotation: has
 
 Report::findings "1" ..> "n" Finding
 Report::studyAssessment "1" ..> "1" StudyAssessment
 
-Assessment <|-- LesionAssessment
+Assessment <|-- FindingAssessment
 Assessment <|-- StudyAssessment
 
 @enduml
