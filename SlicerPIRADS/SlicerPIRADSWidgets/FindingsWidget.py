@@ -91,12 +91,16 @@ class FindingsWidget(qt.QWidget, GeneralModuleMixin):
     self._updateButtons()
 
   def _displayFindingInformationWidget(self, finding):
-    self._findingInformationWidget = FindingInformationWidget(finding)
+    if not self._findingInformationWidget:
+      self._findingInformationWidget = FindingInformationWidget(finding)
+    else:
+      self._findingInformationWidget.setFinding(finding)
     self.ui.layout().addWidget(self._findingInformationWidget)
 
   def _deleteFindingInformationWidget(self):
     if self._findingInformationWidget:
-      self._findingInformationWidget.delete()
+      self.ui.layout().removeWidget(self._findingInformationWidget)
+      # self._findingInformationWidget.delete()
 
   def _updateButtons(self):
     currentIndex = self._findingsListView.currentIndex()
@@ -145,6 +149,11 @@ class FindingInformationWidget(qt.QWidget):
     self._volumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     self.setup()
 
+  def setFinding(self, finding):
+    self._finding = finding
+    self._fillAnnotationTable()
+    self._removeAnnotationToolWidget()
+
   def setup(self):
     self.setLayout(qt.QGridLayout())
     self._loadUI()
@@ -163,7 +172,8 @@ class FindingInformationWidget(qt.QWidget):
     self._annotationListWidget = self.ui.findChild(qt.QListWidget, "annotationsListWidget")
     self._annotationToolFrame = self.ui.findChild(qt.QFrame, "annotationToolFrame")
     self._annotationToolFrame.setLayout(qt.QGridLayout())
-    self._annotationToolWidget = None
+    self._currentAnnotationToolWidget = None
+    self._annotationToolWidgets = dict()
     self._fillAnnotationTable()
 
   def _setupConnections(self):
@@ -174,10 +184,11 @@ class FindingInformationWidget(qt.QWidget):
     self.destroyed.connect(self._cleanupConnections)
 
   def _onCurrentItemChanged(self, current, previous):
-    self._annotationListWidget.itemWidget(current).enable(True)
+    if current:
+      self._annotationListWidget.itemWidget(current).enable(True)
     if previous:
       self._annotationListWidget.itemWidget(previous).enable(False)
-      self._deleteAnnotationToolWidget()
+      self._removeAnnotationToolWidget()
 
   def _onFindingNameChanged(self, text):
     # TODO: what to do with empty string?
@@ -187,6 +198,7 @@ class FindingInformationWidget(qt.QWidget):
     self._prostateMapButton.clicked.disconnect(self._onProstateMapButtonClicked)
 
   def _fillAnnotationTable(self):
+    self._annotationListWidget.clear()
     for volume in self._volumeNodes:
       seriesType = SeriesTypeFactory.getSeriesType(volume)
       if seriesType:
@@ -197,7 +209,7 @@ class FindingInformationWidget(qt.QWidget):
         annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolSelectedEvent,
                                               self.onAnnotationToolSelected)
         annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolDeselectedEvent,
-                                              lambda caller, event: self._deleteAnnotationToolWidget())
+                                              lambda caller, event: self._removeAnnotationToolWidget())
         listWidgetItem.setSizeHint(annotationItemWidget.sizeHint)
         self._annotationListWidget.setItemWidget(listWidgetItem, annotationItemWidget)
       else:
@@ -207,11 +219,11 @@ class FindingInformationWidget(qt.QWidget):
   def onAnnotationToolSelected(self, caller, event, callData):
     itemWidget = self.getAnnotationItemWidgetForParameterNode(caller)
     assert itemWidget
-    self._deleteAnnotationToolWidget()
+    self._removeAnnotationToolWidget()
     seriesType = itemWidget.getSeriesType()
     annotation = self._finding.getOrCreateAnnotation(seriesType, callData)
-    self._annotationToolWidget = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)(
-      parent=self._annotationToolFrame, finding=self._finding, seriesType=seriesType)
+    annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
+    self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
 
   def getAnnotationItemWidgetForParameterNode(self, pNode):
     for idx in range(self._annotationListWidget.count):
@@ -230,6 +242,20 @@ class FindingInformationWidget(qt.QWidget):
     if self._prostateMapDialog.exec_():
       self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
-  def _deleteAnnotationToolWidget(self):
-    if self._annotationToolWidget:
-      self._annotationToolWidget.delete()
+  def _removeAnnotationToolWidget(self):
+    if self._currentAnnotationToolWidget:
+      # TODO: need to think about it
+      self._annotationToolFrame.layout().removeWidget(self._currentAnnotationToolWidget.editor)
+      self._currentAnnotationToolWidget = None
+
+  def _getOrCreateAnnotationToolWidget(self, annotationWidgetClass, seriesType):
+    try:
+      annotationWidget = self._annotationToolWidgets[annotationWidgetClass]
+      annotationWidget.setData(self._finding, seriesType)
+      annotationWidget.parent = self._annotationToolFrame
+      self._annotationToolFrame.layout().addWidget(annotationWidget.editor)
+    except KeyError:
+      annotationWidget = annotationWidgetClass(parent=self._annotationToolFrame, finding=self._finding,
+                                               seriesType=seriesType)
+      self._annotationToolWidgets[annotationWidgetClass] = annotationWidget
+    return annotationWidget

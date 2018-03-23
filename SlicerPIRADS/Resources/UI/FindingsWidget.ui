@@ -34,20 +34,6 @@
      <property name="rightMargin">
       <number>5</number>
      </property>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="removeFindingsButton">
-       <property name="toolTip">
-        <string>Remove finding</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>:/Icons/Remove.png</normaloff>:/Icons/Remove.png</iconset>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="3">
       <widget class="QPushButton" name="addFindingsButton">
        <property name="enabled">
@@ -150,13 +136,17 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="4">
-      <widget class="QFrame" name="findingInformationWidgetFrame">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="removeFindingsButton">
+       <property name="toolTip">
+        <string>Remove finding</string>
        </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/Icons/Remove.png</normaloff>:/Icons/Remove.png</iconset>
        </property>
       </widget>
      </item>

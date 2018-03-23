@@ -39,13 +39,28 @@ class SlicerPIRADS(ScriptedLoadableModule):
 
 class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
+  @property
+  def loadedVolumeNodes(self):
+    return self._loadedVolumeNodes
+
+  @loadedVolumeNodes.setter
+  def loadedVolumeNodes(self, volumes):
+    self._loadedVolumeNodes = volumes
+    self.updateGUIFromData()
+
   def __init__(self, parent=None):
     ScriptedLoadableModuleWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
     self._loadedVolumeNodes = []
 
+  def updateGUIFromData(self):
+    self._studyAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
+    self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
+
   def setup(self):
+    # TODO: following line is only for the purpose of testing
+    self._loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     ScriptedLoadableModuleWidget.setup(self)
     self._loadDataButton = UICreationHelpers.createButton("Load Data")
     self._studyAssessmentWidget = StudyAssessmentWidget()
@@ -55,6 +70,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.layout.addWidget(self._findingsWidget)
     self.layout.addStretch(1)
     self._setupConnections()
+    self.updateGUIFromData()
 
   def _setupConnections(self):
     self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
@@ -74,6 +90,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
       logging.error(exc.message)
     finally:
       slicer.mrmlScene.RemoveObserver(sceneObserver)
+      self.updateGUIFromData()
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def _onVolumeNodeAdded(self, caller, event, callData):

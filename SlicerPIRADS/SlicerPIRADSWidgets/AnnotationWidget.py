@@ -89,30 +89,57 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     return self._seriesType
 
 
-class CustomSegmentEditorWidget(SegmentEditorWidget):
+class AnnotationToolWidget(object):
 
-  def __init__(self, parent, finding, seriesType):
-    super(CustomSegmentEditorWidget, self).__init__(parent)
-    self.parameterSetNode = None
+  MRML_NODE_CLASS = None
+
+  @property
+  def annotation (self):
+      return self._finding.getOrCreateAnnotation(self._seriesType, self.MRML_NODE_CLASS)
+
+  def __init__(self, finding, seriesType):
+    if not self.MRML_NODE_CLASS:
+      raise NotImplementedError
     self._finding = finding
     self._seriesType = seriesType
+
+  def _updateFromData(self):
+    raise NotImplementedError
+
+  def setData(self, finding, seriesType):
+    self._finding = finding
+    self._seriesType = seriesType
+    self._updateFromData()
+
+
+class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
+
+  MRML_NODE_CLASS = "vtkMRMLSegmentationNode"
+
+  def __init__(self, parent, finding, seriesType):
+    AnnotationToolWidget.__init__(self, finding, seriesType)
+    SegmentEditorWidget.__init__(self, parent)
     self.setup()
 
+  def _updateFromData(self):
+    self.editor.setSegmentationNode(self.annotation.mrmlNode)
+
   def setup(self):
-    super(CustomSegmentEditorWidget, self).setup()
+    SegmentEditorWidget.setup(self)
+    self.editor.setAutoShowMasterVolumeNode(False)
     if self.developerMode:
       self.reloadCollapsibleButton.hide()
     self.editor.switchToSegmentationsButtonVisible = False
     self.editor.segmentationNodeSelectorVisible = False
-    # self.editor.masterVolumeNodeSelectorVisible = False
-    self.editor.setAutoShowMasterVolumeNode(False)
+    self.editor.masterVolumeNodeSelectorVisible = False
     self.editor.setEffectButtonStyle(qt.Qt.ToolButtonIconOnly)
+    self.editor.setEffectNameOrder(['Paint', 'Erase', 'Draw'])
+    self.editor.unorderedEffectsVisible = False
     self.editor.findChild(qt.QPushButton, "AddSegmentButton").hide()
     self.editor.findChild(qt.QPushButton, "RemoveSegmentButton").hide()
     self.editor.findChild(ctk.ctkMenuButton, "Show3DButton").hide()
     self.editor.findChild(ctk.ctkExpandableWidget, "SegmentsTableResizableFrame").hide()
-    annotation = self._finding.getOrCreateAnnotation(self._seriesType, "vtkMRMLSegmentationNode")
-    self.editor.setSegmentationNode(annotation.mrmlNode)
+    self._updateFromData()
 
   def delete(self):
     self.editor.delete()
