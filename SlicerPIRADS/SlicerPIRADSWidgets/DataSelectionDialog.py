@@ -207,9 +207,13 @@ class DataSelectionLogic(object):
     return True
 
   def loadSeries(self, files):
-    multiVolumeImporterPlugin = MultiVolumeImporterPluginClass()
     scalarVolumePlugin = DICOMScalarVolumePluginClass()
-    loadables = scalarVolumePlugin.examineFiles(files) + multiVolumeImporterPlugin.examineFiles(files)
-    loadables.sort(reverse=True, key=lambda loadable: loadable.confidence)
-    if loadables:
-      scalarVolumePlugin.load(loadables[0])
+    scalarLoadables = scalarVolumePlugin.examineFiles(files)
+
+    multiVolumeImporterPlugin = MultiVolumeImporterPluginClass()
+    multiVolumeLoadables = multiVolumeImporterPlugin.examineFiles(files)
+
+    if multiVolumeLoadables and multiVolumeLoadables[0].confidence >= scalarLoadables[0].confidence:
+      multiVolumeImporterPlugin.load(multiVolumeLoadables[0])
+    else:
+      scalarVolumePlugin.load(scalarLoadables[0])

@@ -42,9 +42,9 @@ class Segmentation(Annotation):
     segment = vtkSegmentationCore.vtkSegment()
     segment.SetName(self._masterVolume.GetName())
     # TODO need to think about the reference more in detail. After loading the volume nodes don't occupy the same address
-    self.mrmlNode.SetReferenceImageGeometryParameterFromVolumeNode(self._masterVolume)
-    self.mrmlNode.GetSegmentation().AddSegment(segment)
-    self.mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onSegmentModified)
+    self._mrmlNode.SetReferenceImageGeometryParameterFromVolumeNode(self._masterVolume)
+    self._mrmlNode.GetSegmentation().AddSegment(segment)
+    self._mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onSegmentModified)
 
   def _onSegmentModified(self, caller, event):
     self.invokeEvent(self.DataChangedEvent)
