@@ -89,7 +89,12 @@ class DCE(SeriesType):
 
   @staticmethod
   def canHandleVolumeNode(volumeNode):
-    pass
+    description = volumeNode.GetName().lower()
+    return any(re.search(term, description) for term in [r'ax dynamic', r'3d dce'])
+
+  @classmethod
+  def getName(cls):
+    return "DCE enhanced"
 
 
 class SUB(SeriesType):
@@ -112,26 +117,11 @@ class DWIb(SeriesType):
 
   @staticmethod
   def canHandleVolumeNode(volumeNode):
-    pass
+    return re.search(r'dwi', volumeNode.GetName().lower())
 
   @classmethod
   def getName(cls):
     return "DWI-b"
-
-
-class DCE(SeriesType):
-
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    pass
-
-  @classmethod
-  def getName(cls):
-    return "DCE enhanced"
 
 
 class SeriesTypeFactory(object):

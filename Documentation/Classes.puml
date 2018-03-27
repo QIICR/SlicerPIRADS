@@ -92,8 +92,7 @@ package SlicerPIRADSLogic {
 
 
   class Finding {
-    + createAnnotation(seriesType, mrmlNodeClass): Annotation
-    + getAnnotation(seriesType, mrmlNodeClass): Annotation
+    + getOrCreateAnnotation(seriesType, mrmlNodeClass): Annotation
   }
 
   class Report {
@@ -106,27 +105,32 @@ package SlicerPIRADSLogic {
   + loadReport(string jsonfilename): bool
   }
 
-  package AnnotationLogic {
+  class SeriesType {
+  }
 
-    interface Annotation {
-    - mrmlNode=None
-    - mrmlClass=None
-    __
-    + setMRMLNode(mrmlNode)
-    }
+  SeriesType <|-- ADC
+  SeriesType <|-- T2a
+  SeriesType <|-- T2c
+  SeriesType <|-- T2s
+  SeriesType <|-- DCE
+  SeriesType <|-- DWIb
+  SeriesType <|-- SUB
 
-    interface Annotation {
-      +id=None
-    }
+  Annotation "1" ..> "1" SeriesType
 
-    class Fiducial {
-    }
 
-    class Segmentation {
-    }
+  interface Annotation {
+  # _masterVolume
+  # mrmlNode=None
+  }
 
-    class Ruler {
-    }
+  class Fiducial {
+  }
+
+  class Segmentation {
+  }
+
+  class Ruler {
   }
 }
 
