@@ -38,6 +38,7 @@ set(DEPENDENCIES_ADDITIONAL_MODULE_PATHS
 #-----------------------------------------------------------------------------
 
 add_subdirectory(SlicerPIRADS)
+add_subdirectory(DICOMPlugins)
 
 #-----------------------------------------------------------------------------
 

@@ -1,0 +1,47 @@
+{
+  "T2a": {
+    "CodeValue": "991001",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "T2-weighted Axial Acquisition"
+  },
+  "T2s": {
+    "CodeValue": "991002",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "T2-weighted Sagittal Acquisition"
+  },
+  "T2c": {
+    "CodeValue": "991003",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "T2-weighted Coronal Acquisition"
+  },
+  "DWI": {
+    "CodeValue": "991004",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "Diffusion-weighted Acquisition"
+  },
+  "DWIb": {
+    "CodeValue": "991005",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "Diffusion-weighted Acquisition High b-value image"
+  },
+  "DCE": {
+    "CodeValue": "991006",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "Dynamic Contrast-Enhanced Acquisition"
+  },
+  "SUB": {
+    "CodeValue": "991007",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "Dynamic Contrast-Enhanced Acquisition Subtract image"
+  },
+  "T1a": {
+    "CodeValue": "991008",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "T1-weighted Axial Acquisition"
+  },
+  "ADC": {
+    "CodeValue": "991009",
+    "CodingSchemeDesignator": "99QIICR",
+    "CodeMeaning": "Apparent Diffusion Coefficient map"
+  }
+}

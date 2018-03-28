@@ -1,0 +1,4 @@
+
+
+class StudyNotEligibleError(Exception):
+  pass

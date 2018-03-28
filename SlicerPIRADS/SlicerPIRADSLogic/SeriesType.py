@@ -1,6 +1,7 @@
 from abc import ABCMeta
 import os
 import re
+import dicom
 
 
 class SeriesType(object):
@@ -10,6 +11,7 @@ class SeriesType(object):
   @classmethod
   def canHandle(cls, obj):
     if type(obj) in [str, unicode]:
+      assert os.path.exists(obj)
       return cls.canHandleFile(obj)
     else:
       #TODO: check if volumeNode
@@ -19,12 +21,21 @@ class SeriesType(object):
   def getName(cls):
     return cls.__name__
 
-  @staticmethod
-  def canHandleFile(filename):
-    raise NotImplementedError
+  @classmethod
+  def canHandleFile(cls, filename):
+    try:
+      dataset = dicom.read_file(filename)
+      return cls._hasEligibleDescription(dataset.SeriesDescription.lower())
+    except AttributeError:
+      return False
 
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
+  @classmethod
+  def canHandleVolumeNode(cls, volumeNode):
+    description = volumeNode.GetName().lower()
+    return cls._hasEligibleDescription(description)
+
+  @classmethod
+  def _hasEligibleDescription(cls, description):
     raise NotImplementedError
 
   def __init__(self, volume):
@@ -34,99 +45,74 @@ class SeriesType(object):
     return self._volume
 
 
+class T1a(SeriesType):
+
+  @classmethod
+  def _hasEligibleDescription(cls, description):
+    return all(term in description for term in ['ax', 't1'])
+
+
 class T2a(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    description = volumeNode.GetName().lower()
+  @classmethod
+  def _hasEligibleDescription(cls, description):
     return all(term in description for term in ['ax', 't2'])
 
 
 class T2s(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    description = volumeNode.GetName().lower()
+  @classmethod
+  def _hasEligibleDescription(cls, description):
     return all(term in description for term in ['sag', 't2'])
 
 
 class T2c(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    description = volumeNode.GetName().lower()
+  @classmethod
+  def _hasEligibleDescription(cls, description):
     return all(term in description for term in ['cor', 't2'])
 
 
 class ADC(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    return 'apparent diffusion coeff' in volumeNode.GetName().lower()
+  @classmethod
+  def _hasEligibleDescription(cls, description):
+    return 'apparent diffusion coeff' in description
 
 
 class DCE(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    description = volumeNode.GetName().lower()
-    return any(re.search(term, description) for term in [r'ax dynamic', r'3d dce'])
-
   @classmethod
-  def getName(cls):
-    return "DCE enhanced"
+  def _hasEligibleDescription(cls, description):
+    return any(re.search(term, description) for term in [r'ax dynamic', r'3d dce'])
 
 
 class SUB(SeriesType):
 
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    description = volumeNode.GetName()
+  @classmethod
+  def _hasEligibleDescription(cls, description):
     return re.search(r'[a-zA-Z]', description) is None
 
 
 class DWIb(SeriesType):
-
-  @staticmethod
-  def canHandleFile(filename):
-    assert os.path.exists(filename)
-
-  @staticmethod
-  def canHandleVolumeNode(volumeNode):
-    return re.search(r'dwi', volumeNode.GetName().lower())
+  # TODO: need more rules especially regarding b-values
 
   @classmethod
-  def getName(cls):
-    return "DWI-b"
+  def _hasEligibleDescription(cls, description):
+    return re.search(r'dwi', description)
+
+
+class DWI(SeriesType):
+  # TODO: need more rules
+
+  @classmethod
+  def _hasEligibleDescription(cls, description):
+    return re.search(r'dwi', description)
 
 
 class SeriesTypeFactory(object):
 
-  SERIES_TYPE_CLASSES = [T2a, T2s, T2c, ADC, DWIb, SUB, DCE]
+  SERIES_TYPE_CLASSES = [T1a, T2a, T2s, T2c, ADC, DWI, DWIb, SUB, DCE]
 
   @staticmethod
   def getSeriesType(obj):
