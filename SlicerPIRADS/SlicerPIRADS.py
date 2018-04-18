@@ -2,10 +2,11 @@ import slicer
 import os
 import qt
 import vtk
+import ctk
 import logging
 from slicer.ScriptedLoadableModule import *
 
-from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ParameterNodeObservationMixin
+from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin
 from SlicerDevelopmentToolboxUtils.mixins import ModuleWidgetMixin
 
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
@@ -13,6 +14,8 @@ from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
 from SlicerPIRADSWidgets.StudyAssessmentWidget import StudyAssessmentWidget
 from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
+
+from SlicerLayoutButtons import SlicerLayoutButtonsWidget
 
 
 class SlicerPIRADS(ScriptedLoadableModule):
@@ -63,14 +66,26 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     ScriptedLoadableModuleWidget.setup(self)
     self._loadDataButton = UICreationHelpers.createButton("Load Data")
+    self._setupCollapsibleLayoutButton()
     self._studyAssessmentWidget = StudyAssessmentWidget()
     self._findingsWidget = FindingsWidget()
     self.layout.addWidget(self._loadDataButton)
+    self.layout.addWidget(self._collapsibleLayoutButton)
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._findingsWidget)
     self.layout.addStretch(1)
     self._setupConnections()
     self.updateGUIFromData()
+
+  def _setupCollapsibleLayoutButton(self):
+    self._collapsibleLayoutButton = ctk.ctkCollapsibleButton()
+    self._collapsibleLayoutButton.text = "Layout"
+    self._collapsibleLayoutButton.collapsed = 0
+    self._collapsibleLayoutButton.setLayout(qt.QVBoxLayout())
+    self._layoutButtonsWidget = SlicerLayoutButtonsWidget(parent=self._collapsibleLayoutButton)
+    self._layoutButtonsWidget.setup()
+    self._layoutButtonsWidget.hideReloadAndTestArea()
+    self._layoutButtonsWidget.setDisplayBackgroundOnly()
 
   def _setupConnections(self):
     self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
