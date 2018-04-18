@@ -5,6 +5,7 @@ import vtk
 import ctk
 import logging
 from slicer.ScriptedLoadableModule import *
+from CompareVolumes import CompareVolumesLogic
 
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin
 from SlicerDevelopmentToolboxUtils.mixins import ModuleWidgetMixin
@@ -56,6 +57,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
     self._loadedVolumeNodes = []
+    self.logic = SlicerPIRADSModuleLogic()
 
   def updateGUIFromData(self):
     self._studyAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
@@ -85,7 +87,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._layoutButtonsWidget = SlicerLayoutButtonsWidget(parent=self._collapsibleLayoutButton)
     self._layoutButtonsWidget.setup()
     self._layoutButtonsWidget.hideReloadAndTestArea()
-    self._layoutButtonsWidget.setDisplayBackgroundOnly()
+    self._layoutButtonsWidget.setDisplayForegroundOnly()
 
   def _setupConnections(self):
     self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
@@ -98,9 +100,11 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     try:
       if self._dataSelectionDialog.exec_():
         self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(self._loadedVolumeNodes)
-        if self._hangingProtocol:
-          slicer.app.layoutManager().setLayout(self._hangingProtocol.LAYOUT)
-          self._organizeVolumesIntoViews()
+        if not self._hangingProtocol:
+          raise RuntimeError("No eligible hanging protocol found.")
+        self.logic.viewerPerVolume(volumeNodes=self._loadedVolumeNodes, layout=self._hangingProtocol.LAYOUT,
+                                   background=self._loadedVolumeNodes[0])
+        self.linkAllSliceWidgets(1)
     except Exception as exc:
       logging.error(exc.message)
     finally:
@@ -112,26 +116,48 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
       self._loadedVolumeNodes.append(callData)
 
-  def _organizeVolumesIntoViews(self):
-    widgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
-    assert len(widgets) >= len(self._loadedVolumeNodes)
-    for idx, widget in enumerate(widgets):
-      try:
-        volume = self._loadedVolumeNodes[idx]
-        widget.mrmlSliceCompositeNode().SetBackgroundVolumeID(volume.GetID())
-        logic = widget.sliceLogic()
-        logic.FitSliceToAll()
-        sliceNode = logic.GetSliceNode()
-        sliceNode.SetOrientationToAxial()
-        sliceNode.RotateToVolumePlane(volume)
-      except IndexError:
-        break
+  def linkAllSliceWidgets(self, link):
+    for widget in ModuleWidgetMixin.getAllVisibleWidgets():
+      sc = widget.mrmlSliceCompositeNode()
+      sc.SetLinkedControl(link)
+      sc.SetInteractionFlagsModifier(4+8+16)
 
 
-class SlicerPIRADSLogic(ScriptedLoadableModuleLogic):
+class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
 
   def __init__(self):
     ScriptedLoadableModuleLogic.__init__(self)
+
+  @staticmethod
+  def viewerPerVolume(volumeNodes,layout,background,orientation='Axial',opacity=1.0):
+    """ Load each volume in the scene into its own slice viewer and link them all together.
+    If background is specified, put it in the background of all viewers and make the other volumes be the foreground.
+    If label is specified, make it active as the label layer of all viewers. Return a map of slice nodes indexed by
+    the view name (given or generated). Opacity applies only when background is selected.
+    """
+
+    if not volumeNodes:
+      raise ValueError("VolumeNodes are supposed to be non empty")
+
+    layoutManager = slicer.app.layoutManager()
+    layoutManager.setLayout(layout)
+
+    sliceWidgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
+
+    slicer.app.processEvents()
+
+    for index, volume in enumerate(volumeNodes):
+      sliceWidget = sliceWidgets[index]
+      volumeNodeID = volume.GetID()
+
+      compositeNode = sliceWidget.mrmlSliceCompositeNode()
+      compositeNode.SetBackgroundVolumeID(background.GetID())
+      compositeNode.SetForegroundVolumeID(volumeNodeID)
+      compositeNode.SetForegroundOpacity(opacity)
+
+      sliceNode = sliceWidget.mrmlSliceNode()
+      sliceNode.SetOrientation(orientation)
+      sliceWidget.fitSliceToBackground()
 
 
 class SlicerPIRADSSlicelet(qt.QWidget):
