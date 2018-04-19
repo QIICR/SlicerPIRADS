@@ -1,9 +1,8 @@
 import qt
 import os
 import slicer
-import string
-from MultiVolumeImporterPlugin import MultiVolumeImporterPluginClass
-from DICOMScalarVolumePlugin import DICOMScalarVolumePluginClass
+import logging
+from DICOMQIICRXLoaderPlugin import *
 
 
 class DataSelectionDialog(qt.QDialog):
@@ -11,7 +10,6 @@ class DataSelectionDialog(qt.QDialog):
   def __init__(self, parent=None):
     qt.QDialog.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
-    self.logic = DataSelectionLogic()
     self.setup()
 
   def setup(self):
@@ -82,19 +80,34 @@ class DataSelectionDialog(qt.QDialog):
       self._studiesTableModel.appendRow(sItem)
 
   def _onStudySelected(self, modelIndex):
-    self._loadButton.enabled = DataSelectionLogic.isStudyPIRADSEligible(self._studiesTableModel.data(modelIndex))
+    # TODO: cache information of is eligible so that it doesn't need to be recalculated every single time selection changes
+    study = self._studiesTableModel.data(modelIndex)
+    self._loadButton.enabled = DICOMQIICRXGenerator.hasEligibleQIICRXReport(study) or \
+                               len(DICOMQIICRXGenerator.getEligibleSeriesForStudy(study))
 
   def _onLoadButtonClicked(self):
     modelIndex = self._studiesTable.selectionModel().currentIndex
-    series = self.logic.getEligibleSeriesForStudy(self._studiesTableModel.data(modelIndex))
-    self._progress.setMaximum(len(series))
-    self._progress.show()
+    studyId = self._studiesTableModel.data(modelIndex)
 
-    for idx, s in enumerate(series):
-      files = slicer.dicomDatabase.filesForSeries(s)
-      self._progress.setValue(idx)
-      slicer.app.processEvents()
-      self.logic.loadSeries(files)
+    # TODO: right now only expecting one report to be in the study
+    qiicrxReportSeries = DICOMQIICRXGenerator.getQIICRXReportSeries(studyId)
+
+    if qiicrxReportSeries:
+      logging.info("Found QIICRX report. Loading it.")
+      loader = DICOMQIICRXLoaderPluginClass()
+      loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries))
+      if loadables:
+        loader.load(loadables[0])
+    else:
+      series = DICOMQIICRXGenerator.getEligibleSeriesForStudy(studyId)
+      self._progress.setMaximum(len(series))
+      self._progress.show()
+
+      for idx, s in enumerate(series):
+        files = slicer.dicomDatabase.filesForSeries(s)
+        self._progress.setValue(idx)
+        slicer.app.processEvents()
+        DICOMQIICRXLoaderPluginClass.loadSeries(files)
 
     self.ui.accept()
 
@@ -166,54 +179,3 @@ class PatientsTableModel(qt.QAbstractTableModel):
 
   def getStudiesForPatient(self, pid):
     return self.db.studiesForPatient(pid)
-
-
-class DataSelectionLogic(object):
-
-  def __init__(self):
-    pass
-
-  @staticmethod
-  def isStudyPIRADSEligible(studyID):
-    return len(DataSelectionLogic.getEligibleSeriesForStudy(studyID)) > 3
-
-  @staticmethod
-  def getEligibleSeriesForStudy(study):
-    db = slicer.dicomDatabase
-    series = db.seriesForStudy(study)
-    validSeries = []
-    for s in series:
-      f = db.filesForSeries(s)[0]
-      if DataSelectionLogic.isSeriesOfInterest(f):
-        validSeries.append(s)
-    return validSeries
-
-  @staticmethod
-  def isSeriesOfInterest(dcmFile):
-    db = slicer.dicomDatabase
-    modality = db.fileValue(dcmFile, "0008,0060")
-    if modality != "MR":
-      return False
-
-    description = db.fileValue(dcmFile, "0008,103E")
-
-    discardThose = ['SAG', 'COR', 'PURE', 'mapping', 'DWI',
-                    'breath', '3D DCE', 'loc', 'Expo', 'Map',
-                    'MAP', 'POST', 'ThreeParameter', 'AutoAIF',
-                    'BAT', '-Slope', 'PkRsqr', 'Loc', 'Cal', 'Body']
-    for d in discardThose:
-      if string.find(description, d) >= 0:
-        return False
-    return True
-
-  def loadSeries(self, files):
-    scalarVolumePlugin = DICOMScalarVolumePluginClass()
-    scalarLoadables = scalarVolumePlugin.examineFiles(files)
-
-    multiVolumeImporterPlugin = MultiVolumeImporterPluginClass()
-    multiVolumeLoadables = multiVolumeImporterPlugin.examineFiles(files)
-
-    if multiVolumeLoadables and multiVolumeLoadables[0].confidence >= scalarLoadables[0].confidence:
-      multiVolumeImporterPlugin.load(multiVolumeLoadables[0])
-    else:
-      scalarVolumePlugin.load(scalarLoadables[0])

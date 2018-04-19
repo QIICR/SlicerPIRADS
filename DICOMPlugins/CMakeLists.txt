@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME DICOMQIICRXGeneratorPlugin)
+set(MODULE_NAME DICOMQIICRXLoaderPlugin)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
@@ -15,9 +15,7 @@ slicerMacroBuildScriptedModule(
 
 #-----------------------------------------------------------------------------
 if(BUILD_TESTING)
-
   # Register the unittest subclass in the main script as a ctest.
   # Note that the test will also be available at runtime.
   # slicer_add_python_unittest(SCRIPT ${MODULE_NAME}.py)
-
 endif()
