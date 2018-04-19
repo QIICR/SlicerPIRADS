@@ -22,11 +22,11 @@ class Annotation(ParameterNodeObservationMixin):
     if not self.MRML_NODE_CLASS:
       raise ValueError("MRML_NODE_CLASS needs to be defined for all inheriting classes of {}".format(self.__class__.__name__))
     self._masterVolume = volumeNode
-    self._mrmlNode = slicer.mrmlScene.AddNewNodeByClass(self.MRML_NODE_CLASS)
+    self.mrmlNode = slicer.mrmlScene.AddNewNodeByClass(self.MRML_NODE_CLASS)
 
   def delete(self):
-    if self._mrmlNode:
-      slicer.mrmlScene.RemoveNode(self._mrmlNode)
+    if self.mrmlNode:
+      slicer.mrmlScene.RemoveNode(self.mrmlNode)
 
 
 class Segmentation(Annotation):
@@ -42,9 +42,9 @@ class Segmentation(Annotation):
     segment = vtkSegmentationCore.vtkSegment()
     segment.SetName(self._masterVolume.GetName())
     # TODO need to think about the reference more in detail. After loading the volume nodes don't occupy the same address
-    self._mrmlNode.SetReferenceImageGeometryParameterFromVolumeNode(self._masterVolume)
-    self._mrmlNode.GetSegmentation().AddSegment(segment)
-    self._mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onSegmentModified)
+    self.mrmlNode.SetReferenceImageGeometryParameterFromVolumeNode(self._masterVolume)
+    self.mrmlNode.GetSegmentation().AddSegment(segment)
+    self.mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onSegmentModified)
 
   def _onSegmentModified(self, caller, event):
     self.invokeEvent(self.DataChangedEvent)
