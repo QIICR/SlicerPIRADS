@@ -82,15 +82,15 @@ class DataSelectionDialog(qt.QDialog):
   def _onStudySelected(self, modelIndex):
     # TODO: cache information of is eligible so that it doesn't need to be recalculated every single time selection changes
     study = self._studiesTableModel.data(modelIndex)
-    self._loadButton.enabled = DICOMQIICRXGenerator.hasEligibleQIICRXReport(study) or \
-                               len(DICOMQIICRXGenerator.getEligibleSeriesForStudy(study))
+    self._loadButton.enabled = DICOMQIICRXLoaderPluginClass.hasEligibleQIICRXReport(study) or \
+                               len(DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(study))
 
   def _onLoadButtonClicked(self):
     modelIndex = self._studiesTable.selectionModel().currentIndex
     studyId = self._studiesTableModel.data(modelIndex)
 
     # TODO: right now only expecting one report to be in the study
-    qiicrxReportSeries = DICOMQIICRXGenerator.getQIICRXReportSeries(studyId)
+    qiicrxReportSeries = DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(studyId)
 
     if qiicrxReportSeries:
       logging.info("Found QIICRX report. Loading it.")
@@ -98,8 +98,9 @@ class DataSelectionDialog(qt.QDialog):
       loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries))
       if loadables:
         loader.load(loadables[0])
+      # TODO: report progress
     else:
-      series = DICOMQIICRXGenerator.getEligibleSeriesForStudy(studyId)
+      series = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyId)
       self._progress.setMaximum(len(series))
       self._progress.show()
 

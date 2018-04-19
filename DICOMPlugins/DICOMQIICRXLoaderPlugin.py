@@ -16,10 +16,18 @@ from SlicerPIRADSLogic.Exception import StudyNotEligibleError
 from SlicerDevelopmentToolboxUtils.mixins import ModuleLogicMixin
 
 
-class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
+class DICOMQIICRXMixin(ModuleLogicMixin):
 
   UID_EnhancedSRStorage = "1.2.840.10008.5.1.4.1.1.88.22"
   TEMPLATE_ID = "QIICRX"
+
+  tags = {
+    'modality': '0008,0060',
+    'seriesDescription': '0008,103E',
+    'seriesInstanceUID': '0020,000E',
+    'classUID': '0008,0016',
+    'templateIdentifier': '0040,DB00'
+  }
 
   @property
   def currentDateTime(self):
@@ -28,6 +36,51 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
     except AttributeError:
       self._currentDateTime = datetime.now().strftime('%Y-%m-%d_%H%M%S')
     return self._currentDateTime
+
+  @property
+  def db(self):
+    return slicer.dicomDatabase
+
+  @classmethod
+  def isQIICRX(cls, dataset):
+    try:
+      return cls.getDICOMValue(dataset, "Modality") == 'SR' and \
+             cls.getDICOMValue(dataset, "SOPClassUID") == cls.UID_EnhancedSRStorage and \
+             cls.getDICOMValue(dataset, "ContentTemplateSequence")[0].TemplateIdentifier == cls.TEMPLATE_ID
+    except (AttributeError, IndexError):
+      return False
+
+
+class DICOMQIICRXLoaderPluginClass(DICOMPlugin, DICOMQIICRXMixin):
+
+  @staticmethod
+  def getEligibleSeriesForStudy(study):
+    db = slicer.dicomDatabase
+    series = db.seriesForStudy(study)
+    validSeries = []
+    for s in series:
+      if SeriesTypeFactory.getSeriesType(db.filesForSeries(s)[0]):
+        validSeries.append(s)
+    return validSeries
+
+  @classmethod
+  def hasEligibleQIICRXReport(cls, study):
+    return cls.getQIICRXReportSeries(study) is not None
+
+  @classmethod
+  def isDicomTIDQIICRX(cls, fileName):
+    if cls.getDICOMValue(fileName, cls.tags['modality']) == 'SR':
+      return DICOMQIICRXLoaderPluginClass.isQIICRX(dicom.read_file(fileName))
+    return False
+
+  @classmethod
+  def getQIICRXReportSeries(cls, study):
+    db = slicer.dicomDatabase
+    series = db.seriesForStudy(study)
+    for currentSeries in series:
+      if cls.isDicomTIDQIICRX(db.filesForSeries(currentSeries)[0]):
+        return currentSeries
+    return None
 
   def __init__(self):
     try:
@@ -80,15 +133,6 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
 
     return loadables
 
-  @classmethod
-  def isQIICRX(cls, dataset):
-    try:
-      return cls.getDICOMValue(dataset, "Modality") == 'SR' and \
-             cls.getDICOMValue(dataset, "SOPClassUID") == cls.UID_EnhancedSRStorage and \
-             cls.getDICOMValue(dataset, "ContentTemplateSequence")[0].TemplateIdentifier == cls.TEMPLATE_ID
-    except (AttributeError, IndexError):
-      return False
-
   def load(self, loadable):
 
     uid = loadable.uids[0]
@@ -98,7 +142,7 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
 
     outputFile = os.path.join(self.tempDir, "{}.json".format(uid))
 
-    srFileName = slicer.dicomDatabase.fileForInstance(uid)
+    srFileName = self.db.fileForInstance(uid)
     if srFileName is None:
       logging.debug('Failed to get the filename from the DICOM database for ', uid)
       return False
@@ -114,12 +158,10 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
       # self.cleanup()
       return False
 
-    db = slicer.dicomDatabase
-
     with open(outputFile) as metaFile:
       data = json.load(metaFile)
       for imageLibraryEntry in data['imageLibrary']:
-        files = [db.fileForInstance(e) for e in imageLibraryEntry['instanceUIDs']]
+        files = [self.db.fileForInstance(e) for e in imageLibraryEntry['instanceUIDs']]
         self.loadSeries(files)
 
     return True
@@ -136,31 +178,9 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, ModuleLogicMixin):
       multiVolumeImporterPlugin.load(multiVolumeLoadables[0])
     else:
       scalarVolumePlugin.load(scalarLoadables[0])
-      
 
-class DICOMQIICRXGenerator(ModuleLogicMixin):
 
-  UID_EnhancedSRStorage = "1.2.840.10008.5.1.4.1.1.88.22"
-
-  TAGS = {
-    'modality': '0008,0060',
-    'seriesDescription': '0008,103E',
-    'seriesInstanceUID': '0020,000E',
-    'classUID': '0008,0016',
-    'templateIdentifier': '0040,DB00'
-  }
-
-  @property
-  def currentDateTime(self):
-    try:
-      return self._currentDateTime
-    except AttributeError:
-      self._currentDateTime = datetime.now().strftime('%Y-%m-%d_%H%M%S')
-    return self._currentDateTime
-
-  @property
-  def db(self):
-    return slicer.dicomDatabase
+class DICOMQIICRXGenerator(DICOMQIICRXMixin):
 
   def __init__(self):
     try:
@@ -190,7 +210,7 @@ class DICOMQIICRXGenerator(ModuleLogicMixin):
       raise Exception("qiicrxsr CLI did not complete cleanly")
     else:
       indexer = ctk.ctkDICOMIndexer()
-      indexer.addFile(slicer.dicomDatabase, outputSRPath, "copy")
+      indexer.addFile(self.db, outputSRPath, "copy")
 
   def _generateJSON(self, studyID):
     eligibleSeries = self.getEligibleSeriesForStudy(studyID)
@@ -244,42 +264,13 @@ class DICOMQIICRXGenerator(ModuleLogicMixin):
     seriesType = SeriesTypeFactory.getSeriesType(files[0])
     if not seriesType:
       raise ValueError("No eligible series type found for series '%s' " %
-                       self.db.fileValue(files[0], self.TAGS['seriesDescription']))
+                       self.db.fileValue(files[0], self.tags['seriesDescription']))
     data['piradsSeriesType'] = acqTypes[seriesType.getName()]
     if organizedInDirectories:
       data['inputDICOMDirectory'] = os.path.basename(os.path.dirname(files[0]))
     else:
       data['inputDICOMFiles'] = [os.path.basename(f) for f in files]
     return data
-
-  @staticmethod
-  def getEligibleSeriesForStudy(study):
-    db = slicer.dicomDatabase
-    series = db.seriesForStudy(study)
-    validSeries = []
-    for s in series:
-      if SeriesTypeFactory.getSeriesType(db.filesForSeries(s)[0]):
-        validSeries.append(s)
-    return validSeries
-
-  @classmethod
-  def hasEligibleQIICRXReport(cls, study):
-    return cls.getQIICRXReportSeries(study) is not None
-
-  @classmethod
-  def isDicomTIDQIICRX(cls, fileName):
-    if cls.getDICOMValue(fileName, cls.TAGS['modality']) == 'SR':
-      return DICOMQIICRXLoaderPluginClass.isQIICRX(dicom.read_file(fileName))
-    return False
-
-  @classmethod
-  def getQIICRXReportSeries(cls, study):
-    db = slicer.dicomDatabase
-    series = db.seriesForStudy(study)
-    for currentSeries in series:
-      if cls.isDicomTIDQIICRX(db.filesForSeries(currentSeries)[0]):
-        return currentSeries
-    return None
 
 
 class DICOMQIICRXLoaderPlugin:
