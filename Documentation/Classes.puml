@@ -1,0 +1,166 @@
+@startuml
+left to right direction
+
+'TODO: think about loading and saving data!
+
+package SlicerPIRADSWidget {
+
+  class MultiVolumeExplorerWidget {
+  }
+
+  class PatientInfoWidget {
+  }
+
+  package Finding {
+    class FindingsWidget {
+      - __findingList
+      - __findingsInformationWidget
+      - __AnnotationToolWidget
+    }
+
+    class FindingsList {
+      + createFinding(): Finding
+      + addAssessment()
+    }
+
+    class AnnotationToolSelectionWidget {
+      - __annotationTools: list
+      + addAnnotationTool(AnnotationTool tool)
+      + getAnnotationTools(): list
+      + setActiveAnnotationTool(id): bool
+    }
+
+    class FindingInformationWidget {
+
+    }
+
+    class AnnotationToolWidget {
+    }
+  }
+
+  class DataSelectionDialog {
+    # _patientTable
+    # _studiesTable
+  }
+
+  '  Connections
+
+  package Assessment {
+
+    class AssessmentDialog {
+      + setAssessment(): Assessment
+    }
+    AssessmentDialog <|-- StudyAssessmentWidget
+    AssessmentDialog <|-- FindingAssessmentWidget
+  }
+
+}
+
+
+package SlicerPIRADSLogic {
+
+  package AssessmentLogic {
+    interface Assessment {
+      - __schema: string
+      - __data=None
+      .. setter ..
+      + loadSchema(fileName)
+      + loadData(string): bool
+      .. getter ..
+      + getSchema(): string
+      + getData(): string
+    }
+
+    class FindingAssessment {
+    }
+
+    class StudyAssessment {
+    }
+  }
+
+  'interface DataHandler {
+  '  + save()
+  '  + load(fileName): bool
+  '}
+  '
+  'class ReportDataHandler {
+  '}
+  'DataHandler <|-- ReportDataHandler
+  'DataHandler <|-- StudyAssessmentHandler
+  '
+  'Assessment -> DataHandler: has_a
+
+
+  class Finding {
+    + getOrCreateAnnotation(seriesType, mrmlNodeClass): Annotation
+  }
+
+  class Report {
+  - findings: Finding
+  - studyAssessment: StudyAssessment
+  __
+  + startReport(): bool
+  + closeReport(): bool
+  + saveReport(): bool
+  + loadReport(string jsonfilename): bool
+  }
+
+  class SeriesType {
+  }
+
+  SeriesType <|-- ADC
+  SeriesType <|-- T2a
+  SeriesType <|-- T2c
+  SeriesType <|-- T2s
+  SeriesType <|-- DCE
+  SeriesType <|-- DWIb
+  SeriesType <|-- SUB
+
+  Annotation "1" ..> "1" SeriesType
+
+
+  interface Annotation {
+  # _masterVolume
+  # mrmlNode=None
+  }
+
+  class Fiducial {
+  }
+
+  class Segmentation {
+  }
+
+  class Ruler {
+  }
+}
+
+
+SlicerPIRADSWidget ..> Report: has_a
+
+'FindingAssessmentWidget ..> AssessmentHelp
+
+FindingAssessmentWidget ..> FindingAssessment:generated_from
+StudyAssessmentWidget ..> StudyAssessment:generated_from
+
+FindingsList "1" ..> "0..*" Finding:has/creates
+FindingsWidget ..> FindingInformationWidget: has
+FindingsWidget::_AnnotationToolWidget ..> AnnotationToolWidget: has
+FindingsWidget::__FindingsList ..> FindingsList: has
+
+Annotation <|-- Fiducial
+Annotation <|-- Segmentation
+Annotation <|-- Ruler
+
+FindingInformationWidget "1" .> "n" AnnotationToolSelectionWidget: has
+
+
+Finding "1" *-- "1" FindingAssessment: has_a
+Finding::_annotations "1" *-- "n" Annotation: has
+
+Report::findings "1" ..> "n" Finding
+Report::studyAssessment "1" ..> "1" StudyAssessment
+
+Assessment <|-- FindingAssessment
+Assessment <|-- StudyAssessment
+
+@enduml

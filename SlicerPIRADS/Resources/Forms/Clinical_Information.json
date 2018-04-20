@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "title": "Clinical Information",
+  "properties": {
+    "Prostate Specific Antigene (PSA)": {
+      "type": "object",
+      "properties": {
+        "PSA last value [ng/mL]": {
+          "type": "number"
+        },
+        "PSA ratio": {
+          "type": "number"
+        },
+        "PSA history and other PSA derivatives": {
+          "type": "string",
+          "ui:widget": "textarea"
+        }
+      }
+    },
+    "Other clinical information": {
+      "type": "object",
+      "properties": {
+        "Previous biopsy and Gleason Score": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 3
+        },
+        "Digital rectal examination (DRE)": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

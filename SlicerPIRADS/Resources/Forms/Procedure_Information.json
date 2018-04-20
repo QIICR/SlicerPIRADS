@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "title": "Procedure Information",
+  "properties": {
+    "Exam quality": {
+      "type": "object",
+      "properties": {
+        "General exam quality": {
+          "type": "string"
+        },
+        "Rectal cleaning": {
+          "type": "string"
+        }
+      }
+    },
+    "Technical details": {
+      "type": "object",
+      "properties": {
+        "Protocol details": {
+          "type": "string"
+        },
+        "Field of MRI scanner": {
+          "type": "string",
+          "enum": [
+            "1.5T",
+            "3T"
+          ],
+          "default": "3T"
+        },
+        "Type of the contrast medium": {
+          "type": "string"
+        },
+        "Volume of contrast medium [mL]": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

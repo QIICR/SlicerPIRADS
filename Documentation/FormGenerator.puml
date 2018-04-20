@@ -1,0 +1,94 @@
+@startuml
+
+class Widget {
+  - __formGeneratorFactory
+  + setup()
+}
+
+Widget::__formGeneratorFactory ..> FormGeneratorFactory: uses
+
+
+class FormGeneratorFactory {
+  + {static} getFormGenerator(filePath): JSONFormGenerator
+}
+
+FormGeneratorFactory::getFormGenerator ..> FormGenerator: returns
+
+class FormGenerator {
+  + {virtual} generate(): QFrame
+  - __init__(filePath)
+}
+
+' factory pattern taking json file name returning
+
+class JSONFormGenerator {
+  # _generate()
+
+}
+
+class YAMLFormGenerator {
+
+}
+
+note left of FormGeneratorFactory: \
+Depending on file type returning \n\
+a concrete implementation of \n\
+FormGenerator
+
+FormGenerator <|-- JSONFormGenerator
+FormGenerator <|-- YAMLFormGenerator
+
+abstract class AbstractField {
+  # _title: string
+  # _schema: dict
+  # _data: dict
+  + getData(): dict
+  + {abstract} setup()
+  # _updateData(key, value)
+}
+
+AbstractField <|-- AbstractFieldWidget
+qt.QWidget <|-- AbstractFieldWidget
+
+
+abstract class AbstractFieldWidget {
+}
+
+class JSONStringField {
+
+}
+
+class JSONObjectField {
+  + elements: list[AbstractField]
+  # _data: dict
+}
+
+JSONObjectField::elements "0" ..> "*" AbstractField
+qt.QGroupBox <|-- JSONObjectField
+
+AbstractField <|-- JSONObjectField
+
+class JSONNumberField {
+
+}
+
+class JSONIntegerField {
+
+}
+
+class JSONArrayField {
+}
+
+class JSONEnumField {
+}
+
+AbstractFieldWidget <|-- JSONEnumField
+AbstractFieldWidget <|-- JSONStringField
+AbstractFieldWidget <|-- JSONNumberField
+AbstractFieldWidget <|-- JSONIntegerField
+
+AbstractFieldWidget <|-- JSONArrayField
+
+JSONFormGenerator ..> JSONObjectField:uses
+
+@enduml

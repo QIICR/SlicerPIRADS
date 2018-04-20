@@ -1,0 +1,22 @@
+{
+  "Reader": "Some name",
+  "Date": "2018-01-30T10:18:34.57Z",
+  "StudyAssessment": {
+    "Schema": "StudyAssessmentSchema.json",
+    "FileName": "StudyAssessment.json"
+  },
+  "SeriesUIDs": ["..."],
+  "Findings": [
+    {
+      "Name": "LTZaApex##",
+      "MeasurementClass": "vtkMRMLMarkupsFiducialNode",
+      "FileName": "LTZaApex##.fcsv",
+      "LesionAssessment": {
+        "Schema": "LesionAssessmentSchema.json",
+        "FileName": "LTZaApex##.json"
+      }
+    }
+  ],
+  "GIT_WC_URL": "https://github.com/SlicerProstate/SlicerPIRADS.git",
+  "GIT_COMMIT_HASH": "44ec1ee"
+}
