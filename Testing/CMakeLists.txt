@@ -2,7 +2,6 @@ set(PYTHON_TEST_SCRIPTS
   ${MODULE_NAME}Tests.py
   FormGeneratorFactoryTests.py
   JSONFormGeneratorTests.py
-  AssessmentTests.py
   )
 
 foreach(python_script ${PYTHON_TEST_SCRIPTS})

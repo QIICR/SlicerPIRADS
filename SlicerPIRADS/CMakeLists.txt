@@ -9,7 +9,6 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/HangingProtocol.py
   SlicerPIRADSLogic/SeriesType.py
   SlicerPIRADSWidgets/__init__.py
-  SlicerPIRADSWidgets/AssessmentDialog.py
   SlicerPIRADSWidgets/AnnotationWidget.py
   SlicerPIRADSWidgets/FindingsWidget.py
   SlicerPIRADSWidgets/ProstateSectorMapDialog.py
@@ -20,7 +19,6 @@ set(MODULE_PYTHON_RESOURCES
   Resources/default.cfg
   Resources/Forms/Clinical_Information.json
   Resources/Forms/Procedure_Information.json
-  Resources/UI/AssessmentDialog.ui
   Resources/UI/DataSelectionDialog.ui
   Resources/UI/AnnotationItemWidget.ui
   Resources/UI/FindingsWidget.ui

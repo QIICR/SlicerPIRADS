@@ -2,7 +2,7 @@ import qt
 import os
 import slicer
 
-from .AssessmentDialog import AssessmentDialog
+from SlicerDevelopmentToolboxUtils.forms.FormsDialog import FormsDialog
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
 
 
@@ -44,7 +44,7 @@ class StudyAssessmentWidget(qt.QWidget, GeneralModuleMixin):
         forms = GeneralModuleMixin.getSetting(self, "Study_Assessment_Forms", moduleName="SlicerPIRADS")
         if forms:
           forms = [os.path.join(self.modulePath, 'Resources', 'Forms', f) for f in forms.split(" ")]
-          self._assessmentFormWidget = AssessmentDialog(forms)
+          self._assessmentFormWidget = FormsDialog(forms)
       self._assessmentFormWidget.exec_()
       print self._assessmentFormWidget.getData()
       # TODO: if item added, change icon and react
