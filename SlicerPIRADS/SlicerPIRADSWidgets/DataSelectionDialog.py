@@ -100,6 +100,7 @@ class DataSelectionDialog(qt.QDialog):
         loader.load(loadables[0])
       # TODO: report progress
     else:
+      #TODO Generate report and then load from generated report
       series = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyId)
       self._progress.setMaximum(len(series))
       self._progress.show()

@@ -24,6 +24,7 @@ class SeriesType(object):
   @classmethod
   def canHandleFile(cls, filename):
     try:
+      # TODO: if is imported in DICOMDatabase, use database mechanism for checking tag else use dicom
       dataset = dicom.read_file(filename)
       return cls._hasEligibleDescription(dataset.SeriesDescription.lower())
     except AttributeError:

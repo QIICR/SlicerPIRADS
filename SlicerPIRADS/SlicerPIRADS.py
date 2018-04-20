@@ -131,7 +131,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
           raise RuntimeError("No eligible hanging protocol found.")
         self.logic.viewerPerVolume(volumeNodes=self._loadedVolumeNodes, layout=self._hangingProtocol.LAYOUT,
                                    background=self._loadedVolumeNodes[0])
-        self.linkAllSliceWidgets(1)
+        ModuleWidgetMixin.linkAllSliceWidgets(1)
         self.checkForMultiVolumes()
     except Exception as exc:
       logging.error(exc.message)
@@ -161,13 +161,6 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
   def _onVolumeNodeAdded(self, caller, event, callData):
     if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
       self._loadedVolumeNodes.append(callData)
-
-  @staticmethod
-  def linkAllSliceWidgets(link):
-    for widget in ModuleWidgetMixin.getAllVisibleWidgets():
-      sc = widget.mrmlSliceCompositeNode()
-      sc.SetLinkedControl(link)
-      sc.SetInteractionFlagsModifier(4+8+16)
 
 
 class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
@@ -204,6 +197,7 @@ class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
 
       sliceNode = sliceWidget.mrmlSliceNode()
       sliceNode.SetOrientation(orientation)
+      sliceNode.RotateToVolumePlane(volume)
       sliceWidget.fitSliceToBackground()
 
 
