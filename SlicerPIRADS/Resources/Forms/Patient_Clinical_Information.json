@@ -1,0 +1,87 @@
+{
+  "type": "object",
+  "title": "Patient Clinical Information",
+  "properties": {
+    "PSA history": {
+      "collapsible": true,
+      "type": "object",
+      "properties": {
+        "PSA last value [ng/mL]": {
+          "type": "number"
+        },
+        "PSA history and other PSA derivatives": {
+          "type": "string",
+          "ui:widget": "textarea"
+        },
+        "Date": {
+          "type": "string"
+        }
+      }
+    },
+    "Digital rectal exam (DRE) history": {
+      "collapsible": true,
+      "type": "object",
+      "properties": {
+        "DRE result": {
+          "type": "string",
+          "enum": [
+            "Normal",
+            "Abnormal"
+          ],
+          "default": "Normal"
+        },
+        "Date": {
+          "type": "string"
+        }
+      }
+    },
+    "Biopsy history": {
+      "collapsible": true,
+      "type": "object",
+      "properties": {
+        "Date": {
+          "type": "string"
+        },
+        "Biopsy approach, number of cores": {
+          "type": "string",
+          "ui:widget": "textarea"
+        },
+        "Biopsy findings": {
+          "type": "object",
+          "properties": {
+            "Gleason score": {
+              "type": "string"
+            },
+            "Biopsy sample location": {
+              "type": "string"
+            },
+            "% core involvement": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "Other relevant clinical history": {
+      "type": "object",
+      "properties": {
+        "Medications": {
+          "type": "string"
+        },
+        "Prior prostate infections": {
+          "type": "string"
+        },
+        "Pelvic surgery": {
+          "type": "string"
+        },
+        "Radiation therapy": {
+          "type": "string"
+        },
+        "Family history": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "title": "Imaging study information",
+  "properties": {
+    "Magnet field strength": {
+      "type": "string",
+      "enum": [
+        "1.5T",
+        "3T"
+      ],
+      "default": "3T"
+    },
+    "Endorectal coil used": {
+      "ui:widget": "radio",
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ],
+      "default": "no"
+    }
+  }
+}
