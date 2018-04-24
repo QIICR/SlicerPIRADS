@@ -1,5 +1,6 @@
 import qt
 import vtk
+import ctk
 import os
 import slicer
 import logging
@@ -12,10 +13,11 @@ from SlicerPIRADSWidgets.AnnotationWidget import AnnotationWidgetFactory, Annota
 from SlicerPIRADSWidgets.ProstateSectorMapDialog import ProstateSectorMapDialog
 
 
-class FindingsWidget(qt.QWidget, GeneralModuleMixin):
+class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
   def __init__(self, maximumNumber=None, parent=None):
-    qt.QWidget.__init__(self, parent)
+    ctk.ctkCollapsibleButton.__init__(self, parent)
+    self.text = "Findings"
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._maximumFindingCount = maximumNumber
     self.setup()

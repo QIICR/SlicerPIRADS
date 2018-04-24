@@ -1,4 +1,5 @@
 import qt
+import ctk
 import os
 import slicer
 
@@ -6,10 +7,11 @@ from SlicerDevelopmentToolboxUtils.forms.FormsDialog import FormsDialog
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
 
 
-class StudyAssessmentWidget(qt.QWidget, GeneralModuleMixin):
+class StudyAssessmentWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
   def __init__(self, parent=None):
-    qt.QWidget.__init__(self, parent)
+    ctk.ctkCollapsibleButton.__init__(self, parent)
+    self.text = "Study Level Assessment"
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self.setup()
 
@@ -45,7 +47,7 @@ class StudyAssessmentWidget(qt.QWidget, GeneralModuleMixin):
         if forms:
           forms = [os.path.join(self.modulePath, 'Resources', 'Forms', f) for f in forms.split(" ")]
           self._assessmentFormWidget = FormsDialog(forms)
-      self._assessmentFormWidget.exec_()
+      self._assessmentFormWidget.show()
       print self._assessmentFormWidget.getData()
       # TODO: if item added, change icon and react
       self._studyAssessmentListView.addItem(self._assessmentFormWidget.getData())

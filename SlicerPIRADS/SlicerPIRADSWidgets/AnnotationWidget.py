@@ -20,8 +20,6 @@ class AnnotationWidgetFactory(object):
 
 class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
 
-  # TODO: indicate viewer by displaying color and tooltip
-
   AnnotationToolSelectedEvent = vtk.vtkCommand.UserEvent + 301
   AnnotationToolDeselectedEvent = vtk.vtkCommand.UserEvent + 302
 
