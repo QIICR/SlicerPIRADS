@@ -74,7 +74,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._setupCollapsibleLayoutButton()
     self._setupCollapsibleMultiVolumeExplorerButton()
     self._studyAssessmentWidget = StudyAssessmentWidget()
-    self._findingsWidget = FindingsWidget()
+    self._findingsWidget = FindingsWidget(maximumNumber=4)
     self.layout.addWidget(self._loadDataButton)
     self.layout.addWidget(self._collapsibleLayoutButton)
     self.layout.addWidget(self._collapsibleMultiVolumeButton)

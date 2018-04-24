@@ -4,15 +4,6 @@ import slicer
 from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin
 
 
-class AnnotationFactory(object):
-
-  @staticmethod
-  def getAnnotationClassForMRMLNodeClass(mrmlNodeClass):
-    if mrmlNodeClass == "vtkMRMLSegmentationNode":
-      return Segmentation
-    return None
-
-
 class Annotation(ParameterNodeObservationMixin):
 
   DataChangedEvent = vtk.vtkCommand.UserEvent + 201
@@ -22,6 +13,9 @@ class Annotation(ParameterNodeObservationMixin):
     if not self.MRML_NODE_CLASS:
       raise ValueError("MRML_NODE_CLASS needs to be defined for all inheriting classes of {}".format(self.__class__.__name__))
     self._masterVolume = volumeNode
+    self._initializeMRMLNode()
+
+  def _initializeMRMLNode(self):
     self.mrmlNode = slicer.mrmlScene.AddNewNodeByClass(self.MRML_NODE_CLASS)
 
   def delete(self):
@@ -48,3 +42,57 @@ class Segmentation(Annotation):
 
   def _onSegmentModified(self, caller, event):
     self.invokeEvent(self.DataChangedEvent)
+
+
+class Ruler(Annotation):
+
+  AnnotationStartedEvent = vtk.vtkCommand.UserEvent + 202
+  AnnotationFinishedEvent = vtk.vtkCommand.UserEvent + 203
+
+  MRML_NODE_CLASS = "vtkMRMLAnnotationRulerNode"
+
+  def __init__(self, volumeNode):
+    self.annotationLogic = slicer.modules.annotations.logic()
+    self.rulerObserverTag = None
+    super(Ruler, self).__init__(volumeNode)
+
+  def _initializeMRMLNode(self):
+    # TODO: give instructions to user
+    self.addRulerObserver()
+    mrmlScene = self.annotationLogic.GetMRMLScene()
+    selectionNode = mrmlScene.GetNthNodeByClass(0, "vtkMRMLSelectionNode")
+    selectionNode.SetReferenceActivePlaceNodeClassName(self.MRML_NODE_CLASS)
+    self.annotationLogic.StartPlaceMode(False)
+    # self.mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onRulerModified)
+
+  def addRulerObserver(self):
+    @vtk.calldata_type(vtk.VTK_OBJECT)
+    def onNodeAdded(caller, event, calldata):
+      node = calldata
+      if isinstance(node, getattr(slicer, self.MRML_NODE_CLASS)):
+        # fire created event and
+        self.mrmlNode = node
+        self.removeRulerObserver()
+
+    if self.rulerObserverTag:
+      self.removeRulerObserver()
+    self.rulerObserverTag = slicer.mrmlScene.AddObserver(slicer.vtkMRMLScene.NodeAddedEvent, onNodeAdded)
+
+  def removeRulerObserver(self):
+    if self.rulerObserverTag:
+      self.rulerObserverTag = slicer.mrmlScene.RemoveObserver(self.rulerObserverTag)
+
+  def _onRulerModified(self, caller, event):
+    self.invokeEvent(self.DataChangedEvent)
+
+
+class AnnotationFactory(object):
+
+  ANNOTATION_CLASSES = [Segmentation, Ruler]
+
+  @staticmethod
+  def getAnnotationClassForMRMLNodeClass(mrmlNodeClass):
+    for annotationClass in AnnotationFactory.ANNOTATION_CLASSES:
+      if mrmlNodeClass == annotationClass.MRML_NODE_CLASS:
+        return annotationClass
+    return None

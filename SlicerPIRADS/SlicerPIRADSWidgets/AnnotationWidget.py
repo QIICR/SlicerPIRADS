@@ -5,7 +5,7 @@ import os
 import slicer
 
 from SegmentEditor import SegmentEditorWidget
-from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin
+from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin, ModuleWidgetMixin
 
 
 class AnnotationWidgetFactory(object):
@@ -59,15 +59,24 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     if not enabled:
       for b in self._annotationButtonGroup.buttons():
         b.checked = False
-      # self._annotationButtonGroup.enabled = False
+        self._onAnnotationButtonClicked(b)
 
   def _onAnnotationButtonClicked(self, button):
     for b in self._annotationButtonGroup.buttons():
       if b.checked and b is not button:
         b.checked = False
     if button.checked:
+      # TODO: disable all other slice widgets
+      for w in ModuleWidgetMixin.getAllVisibleWidgets():
+        enabled = self._seriesType.getVolume() is \
+                  slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
+        w.enabled = enabled
+        w.setStyleSheet("#frame{{border: 3px ridge {};}}".format("green" if enabled else "red"))
       self.invokeEvent(self.AnnotationToolSelectedEvent, button.property("MRML_NODE_CLASS"))
     else:
+      for w in ModuleWidgetMixin.getAllVisibleWidgets():
+        w.enabled = True
+        w.setStyleSheet("")
       self.invokeEvent(self.AnnotationToolDeselectedEvent, button.property("MRML_NODE_CLASS"))
 
   def _cleanupConnections(self):
@@ -111,6 +120,9 @@ class AnnotationToolWidget(object):
     self._seriesType = seriesType
     self._updateFromData()
 
+  def resetInteraction(self):
+    raise NotImplementedError
+
 
 class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
 
@@ -143,3 +155,6 @@ class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
 
   def delete(self):
     self.editor.delete()
+
+  def resetInteraction(self):
+    self.editor.setActiveEffectByName("Selection")

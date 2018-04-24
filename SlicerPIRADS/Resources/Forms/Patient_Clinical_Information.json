@@ -4,6 +4,7 @@
   "properties": {
     "PSA history": {
       "collapsible": true,
+      "collapsed": true,
       "type": "object",
       "properties": {
         "PSA last value [ng/mL]": {
@@ -20,6 +21,7 @@
     },
     "Digital rectal exam (DRE) history": {
       "collapsible": true,
+      "collapsed": true,
       "type": "object",
       "properties": {
         "DRE result": {
@@ -37,6 +39,7 @@
     },
     "Biopsy history": {
       "collapsible": true,
+      "collapsed": true,
       "type": "object",
       "properties": {
         "Date": {

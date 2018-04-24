@@ -14,9 +14,10 @@ from SlicerPIRADSWidgets.ProstateSectorMapDialog import ProstateSectorMapDialog
 
 class FindingsWidget(qt.QWidget, GeneralModuleMixin):
 
-  def __init__(self, parent=None):
+  def __init__(self, maximumNumber=None, parent=None):
     qt.QWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self._maximumFindingCount = maximumNumber
     self.setup()
 
   def setup(self):
@@ -32,6 +33,7 @@ class FindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.ui = slicer.util.loadUI(path)
     self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
     self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
+    self._titleLabel = self.ui.findChild(qt.QLabel, "titleLabel")
     self._findingsListView = self.ui.findChild(qt.QListView, "findingsListView")
     self._findingsListModel = FindingsListModel()
     self._findingsListView.setModel(self._findingsListModel)
@@ -50,7 +52,7 @@ class FindingsWidget(qt.QWidget, GeneralModuleMixin):
     self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
 
   def _onFindingItemRightClicked(self, point):
-    if not self._findingsListView.currentIndex():
+    if not self._findingsListView.currentIndex() or not self._findingsListView.model().rowCount():
       return
     self.listMenu = qt.QMenu()
     menu_item = self.listMenu.addAction("Remove Item")
@@ -95,16 +97,19 @@ class FindingsWidget(qt.QWidget, GeneralModuleMixin):
       self._findingInformationWidget = FindingInformationWidget(finding)
     else:
       self._findingInformationWidget.setFinding(finding)
+    self._findingInformationWidget.show()
     self.ui.layout().addWidget(self._findingInformationWidget)
 
   def _deleteFindingInformationWidget(self):
     if self._findingInformationWidget:
       self.ui.layout().removeWidget(self._findingInformationWidget)
-      # self._findingInformationWidget.delete()
+      self._findingInformationWidget.hide()
 
   def _updateButtons(self):
     currentIndex = self._findingsListView.currentIndex()
-    self._removeFindingsButton.setEnabled(self._findingsListView.selectedIndexes())
+    self._removeFindingsButton.setEnabled(self._findingsListView.selectedIndexes()
+                                          and self._findingsListModel.rowCount() > 0)
+    self._addFindingsButton.setEnabled(self._findingsListModel.rowCount() < self._maximumFindingCount)
 
 
 class FindingsListModel(qt.QAbstractListModel):
@@ -222,8 +227,11 @@ class FindingInformationWidget(qt.QWidget):
     self._removeAnnotationToolWidget()
     seriesType = itemWidget.getSeriesType()
     annotation = self._finding.getOrCreateAnnotation(seriesType, callData)
-    annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
-    self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
+    try:
+      annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
+      self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
+    except AttributeError:
+      pass
 
   def getAnnotationItemWidgetForParameterNode(self, pNode):
     for idx in range(self._annotationListWidget.count):
@@ -243,8 +251,9 @@ class FindingInformationWidget(qt.QWidget):
       self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
   def _removeAnnotationToolWidget(self):
+    # TODO: this is too specific for the segment editor
     if self._currentAnnotationToolWidget:
-      # TODO: need to think about it
+      self._currentAnnotationToolWidget.resetInteraction()
       self._annotationToolFrame.layout().removeWidget(self._currentAnnotationToolWidget.editor)
       self._currentAnnotationToolWidget = None
 
