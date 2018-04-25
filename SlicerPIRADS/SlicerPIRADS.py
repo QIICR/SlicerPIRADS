@@ -6,12 +6,13 @@ import ctk
 import logging
 import string
 from slicer.ScriptedLoadableModule import *
-from CompareVolumes import CompareVolumesLogic
 
 from qSlicerMultiVolumeExplorerModuleWidget import qSlicerMultiVolumeExplorerSimplifiedModuleWidget
 from qSlicerMultiVolumeExplorerModuleHelper import qSlicerMultiVolumeExplorerModuleHelper as MVHelper
 
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleWidgetMixin
+from SlicerDevelopmentToolboxUtils.icons import Icons
+from SlicerDevelopmentToolboxUtils.buttons import ModuleSettingsButton, CrosshairButton
 
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
@@ -70,7 +71,9 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     # TODO: following line is only for the purpose of testing
     self._loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     ScriptedLoadableModuleWidget.setup(self)
+    self.setupViewSettingGroupBox()
     self._loadDataButton = UICreationHelpers.createButton("Load Data")
+    self._loadDataButton.setIcon(Icons.open)
     self._setupCollapsibleLayoutButton()
     self._setupCollapsibleMultiVolumeExplorerButton()
     self._studyAssessmentWidget = StudyAssessmentWidget()
@@ -86,6 +89,12 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.layout.addStretch(1)
     self._setupConnections()
     self.updateGUIFromData()
+
+  def setupViewSettingGroupBox(self):
+    self.crosshairButton = CrosshairButton()
+    self.settingsButton = ModuleSettingsButton(self.moduleName)
+    self.settingsButton.enabled = False
+    self.layout.addWidget(UICreationHelpers.createHLayout([self.crosshairButton, self.settingsButton]))
 
   def _setupCollapsibleLayoutButton(self):
     self._collapsibleLayoutButton = ctk.ctkCollapsibleButton()

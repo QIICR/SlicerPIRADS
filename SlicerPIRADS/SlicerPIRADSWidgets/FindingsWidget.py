@@ -6,6 +6,7 @@ import slicer
 import logging
 
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
+from SlicerDevelopmentToolboxUtils.icons import Icons
 
 from SlicerPIRADSLogic.Finding import Finding
 from SlicerPIRADSLogic.SeriesType import SeriesTypeFactory
@@ -39,6 +40,8 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
     self._findingsListView = self.ui.findChild(qt.QListView, "findingsListView")
     self._findingsListModel = FindingsListModel()
     self._findingsListView.setModel(self._findingsListModel)
+    self._findingInformationFrame = self.ui.findChild(qt.QFrame, "findingInformationFrame")
+    self._findingInformationFrame.setLayout(qt.QGridLayout())
     self._updateButtons()
 
   def _setupConnections(self):
@@ -100,11 +103,11 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
     else:
       self._findingInformationWidget.setFinding(finding)
     self._findingInformationWidget.show()
-    self.ui.layout().addWidget(self._findingInformationWidget)
+    self._findingInformationFrame.layout().addWidget(self._findingInformationWidget)
 
   def _deleteFindingInformationWidget(self):
     if self._findingInformationWidget:
-      self.ui.layout().removeWidget(self._findingInformationWidget)
+      self._findingInformationFrame.layout().removeWidget(self._findingInformationWidget)
       self._findingInformationWidget.hide()
 
   def _updateButtons(self):
@@ -176,6 +179,8 @@ class FindingInformationWidget(qt.QWidget):
     self._prostateMapButton.setIconSize(qt.QSize(20, 32))
     self._prostateMapButton.setIcon(qt.QIcon(os.path.join(self.modulePath, 'Resources', 'Icons', 'ProstateMap.png')))
     self._prostateMapDialog = None
+    self._assessmentButton = self.ui.findChild(qt.QPushButton, "assessmentButton")
+    self._assessmentButton.setIcon(Icons.text_info)
     self._annotationListWidget = self.ui.findChild(qt.QListWidget, "annotationsListWidget")
     self._annotationToolFrame = self.ui.findChild(qt.QFrame, "annotationToolFrame")
     self._annotationToolFrame.setLayout(qt.QGridLayout())

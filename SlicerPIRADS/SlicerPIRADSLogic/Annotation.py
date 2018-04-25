@@ -22,6 +22,10 @@ class Annotation(ParameterNodeObservationMixin):
     if self.mrmlNode:
       slicer.mrmlScene.RemoveNode(self.mrmlNode)
 
+  def setVisible(self, visible):
+    if self.mrmlNode:
+      self.mrmlNode.SetDisplayVisibility(visible)
+
   def cleanup(self):
     pass
 

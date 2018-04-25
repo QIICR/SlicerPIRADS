@@ -5,7 +5,9 @@ import os
 import slicer
 
 from SegmentEditor import SegmentEditorWidget
+
 from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin, ModuleWidgetMixin
+from SlicerDevelopmentToolboxUtils.icons import Icons
 
 
 class AnnotationWidgetFactory(object):
@@ -39,6 +41,10 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.setLayout(qt.QGridLayout())
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'AnnotationItemWidget.ui')
     self.ui = slicer.util.loadUI(path)
+    self.visibilityButton = self.ui.findChild(qt.QPushButton, "visibilityButton")
+    self.visibilityButton.setIcon(Icons.visible_on)
+    self.visibilityButton.checkable = True
+    self.visibilityButton.checked = True
     self._seriesTypeLabel = self.ui.findChild(qt.QLabel, "seriesTypeLabel")
     self._annotationButtonGroup = self.ui.findChild(qt.QButtonGroup, "annotationButtonGroup")
     for button in self._annotationButtonGroup.buttons():
@@ -50,7 +56,12 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
 
   def _setupConnections(self):
     self._annotationButtonGroup.connect("buttonToggled(QAbstractButton*, bool)", self._onAnnotationButtonClicked)
+    self.visibilityButton.toggled.connect(self._onVisibilityButtonToggled)
     self.destroyed.connect(self._cleanupConnections)
+
+  def _onVisibilityButtonToggled(self, checked):
+    self.visibilityButton.setIcon(Icons.visible_on if checked else Icons.visible_off)
+    self._finding.setSeriesTypeVisible(self._seriesType, checked)
 
   def enable(self, enabled):
     self.enabled = enabled

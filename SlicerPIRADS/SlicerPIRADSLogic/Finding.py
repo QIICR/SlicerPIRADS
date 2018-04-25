@@ -52,6 +52,18 @@ class Finding(ParameterNodeObservationMixin):
     self._sectors = sectors
     self.invokeEvent(self.DataChangedEvent)
 
+  def setAllVisible(self, visible):
+    for seriesType in self._annotations.keys():
+      self.setSeriesTypeVisible(seriesType, visible)
+
+  def setSeriesTypeVisible(self, seriesType, visible):
+    try:
+      for annotationClass, annotation in self._annotations[seriesType].items():
+        if annotation.mrmlNode:
+          annotation.setVisible(visible)
+    except KeyError:
+      pass
+
 
 class FindingAssessment(object):
 
