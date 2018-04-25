@@ -22,6 +22,9 @@ class Annotation(ParameterNodeObservationMixin):
     if self.mrmlNode:
       slicer.mrmlScene.RemoveNode(self.mrmlNode)
 
+  def cleanup(self):
+    pass
+
 
 class Segmentation(Annotation):
 
@@ -56,14 +59,22 @@ class Ruler(Annotation):
     self.rulerObserverTag = None
     super(Ruler, self).__init__(volumeNode)
 
+  def cleanup(self):
+    self.stopPlaceMode()
+
   def _initializeMRMLNode(self):
     # TODO: give instructions to user
+    self.mrmlNode = None
     self.addRulerObserver()
     mrmlScene = self.annotationLogic.GetMRMLScene()
     selectionNode = mrmlScene.GetNthNodeByClass(0, "vtkMRMLSelectionNode")
     selectionNode.SetReferenceActivePlaceNodeClassName(self.MRML_NODE_CLASS)
     self.annotationLogic.StartPlaceMode(False)
     # self.mrmlNode.AddObserver(vtkSegmentationCore.vtkSegmentation.SegmentModified, self._onRulerModified)
+
+  def stopPlaceMode(self):
+    self.removeRulerObserver()
+    self.annotationLogic.StopPlaceMode(True)
 
   def addRulerObserver(self):
     @vtk.calldata_type(vtk.VTK_OBJECT)
@@ -74,8 +85,7 @@ class Ruler(Annotation):
         self.mrmlNode = node
         self.removeRulerObserver()
 
-    if self.rulerObserverTag:
-      self.removeRulerObserver()
+    self.removeRulerObserver()
     self.rulerObserverTag = slicer.mrmlScene.AddObserver(slicer.vtkMRMLScene.NodeAddedEvent, onNodeAdded)
 
   def removeRulerObserver(self):

@@ -216,7 +216,7 @@ class FindingInformationWidget(qt.QWidget):
         annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolSelectedEvent,
                                               self.onAnnotationToolSelected)
         annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolDeselectedEvent,
-                                              lambda caller, event: self._removeAnnotationToolWidget())
+                                              self.onAnnotationToolDeselected)
         listWidgetItem.setSizeHint(annotationItemWidget.sizeHint)
         self._annotationListWidget.setItemWidget(listWidgetItem, annotationItemWidget)
       else:
@@ -232,7 +232,7 @@ class FindingInformationWidget(qt.QWidget):
     try:
       annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
       self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
-    except AttributeError:
+    except (AttributeError, TypeError):
       pass
 
   def getAnnotationItemWidgetForParameterNode(self, pNode):
@@ -251,6 +251,15 @@ class FindingInformationWidget(qt.QWidget):
 
     if self._prostateMapDialog.exec_():
       self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
+
+  @vtk.calldata_type(vtk.VTK_STRING)
+  def onAnnotationToolDeselected(self, caller, event, callData):
+    itemWidget = self.getAnnotationItemWidgetForParameterNode(caller)
+    seriesType = itemWidget.getSeriesType()
+    annotation = self._finding.getOrCreateAnnotation(seriesType, callData)
+    if not annotation.mrmlNode:
+      self._finding.deleteAnnotation(seriesType, callData)
+    self._removeAnnotationToolWidget()
 
   def _removeAnnotationToolWidget(self):
     # TODO: this is too specific for the segment editor

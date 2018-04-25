@@ -37,6 +37,14 @@ class Finding(ParameterNodeObservationMixin):
       self._annotations[seriesType][mrmlNodeClass] = annotation
     return annotation
 
+  def deleteAnnotation(self, seriesType, mrmlNodeClass):
+    try:
+      annotation = self._annotations[seriesType][mrmlNodeClass]
+      annotation.cleanup()
+      del self._annotations[seriesType][mrmlNodeClass]
+    except Exception:
+      pass
+
   def getSectors(self):
     return self._sectors
 

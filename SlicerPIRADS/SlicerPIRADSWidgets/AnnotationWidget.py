@@ -49,7 +49,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.enable(False)
 
   def _setupConnections(self):
-    self._annotationButtonGroup.connect("buttonClicked(QAbstractButton*)", self._onAnnotationButtonClicked)
+    self._annotationButtonGroup.connect("buttonToggled(QAbstractButton*, bool)", self._onAnnotationButtonClicked)
     self.destroyed.connect(self._cleanupConnections)
 
   def enable(self, enabled):
@@ -57,14 +57,12 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     if not enabled:
       for b in self._annotationButtonGroup.buttons():
         b.checked = False
-        self._onAnnotationButtonClicked(b)
 
-  def _onAnnotationButtonClicked(self, button):
-    for b in self._annotationButtonGroup.buttons():
-      if b.checked and b is not button:
-        b.checked = False
-    if button.checked:
-      # TODO: disable all other slice widgets
+  def _onAnnotationButtonClicked(self, button, checked):
+    if checked:
+      for b in self._annotationButtonGroup.buttons():
+        if b.checked and b is not button:
+          b.checked = False
       for w in ModuleWidgetMixin.getAllVisibleWidgets():
         enabled = self._seriesType.getVolume() is \
                   slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
