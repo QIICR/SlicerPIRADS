@@ -6,7 +6,8 @@ import slicer
 
 from SegmentEditor import SegmentEditorWidget
 
-from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin, ModuleWidgetMixin
+from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin, ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.constants import DICOMTAGS
 from SlicerDevelopmentToolboxUtils.icons import Icons
 
 
@@ -21,13 +22,6 @@ class AnnotationWidgetFactory(object):
 
 
 class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
-
-  AnnotationToolSelectedEvent = vtk.vtkCommand.UserEvent + 301
-  AnnotationToolDeselectedEvent = vtk.vtkCommand.UserEvent + 302
-
-  ICON_MAP = {"vtkMRMLSegmentationNode": "SegmentEditor.png",
-              "vtkMRMLAnnotationRulerNode": "Ruler.png",
-              "vtkMRMLMarkupFiducialNode": "Fiducials.png"}
 
   def __init__(self, finding, seriesType):
     super(AnnotationItemWidget, self).__init__()
@@ -46,16 +40,10 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.visibilityButton.checkable = True
     self.visibilityButton.checked = True
     self._seriesTypeLabel = self.ui.findChild(qt.QLabel, "seriesTypeLabel")
-    self._annotationButtonGroup = self.ui.findChild(qt.QButtonGroup, "annotationButtonGroup")
-    for button in self._annotationButtonGroup.buttons():
-      button.setIcon(self.getIconFromMRMLNodeClass(button.property("MRML_NODE_CLASS")))
-
     self.layout().addWidget(self.ui)
     self._setupConnections()
-    self.enable(False)
 
   def _setupConnections(self):
-    self._annotationButtonGroup.connect("buttonToggled(QAbstractButton*, bool)", self._onAnnotationButtonClicked)
     self.visibilityButton.toggled.connect(self._onVisibilityButtonToggled)
     self.destroyed.connect(self._cleanupConnections)
 
@@ -63,43 +51,13 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.visibilityButton.setIcon(Icons.visible_on if checked else Icons.visible_off)
     self._finding.setSeriesTypeVisible(self._seriesType, checked)
 
-  def enable(self, enabled):
-    self.enabled = enabled
-    if not enabled:
-      for b in self._annotationButtonGroup.buttons():
-        b.checked = False
-
-  def _onAnnotationButtonClicked(self, button, checked):
-    if checked:
-      for b in self._annotationButtonGroup.buttons():
-        if b.checked and b is not button:
-          b.checked = False
-      for w in ModuleWidgetMixin.getAllVisibleWidgets():
-        enabled = self._seriesType.getVolume() is \
-                  slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
-        w.enabled = enabled
-        w.setStyleSheet("#frame{{border: 3px ridge {};}}".format("green" if enabled else "red"))
-      self.invokeEvent(self.AnnotationToolSelectedEvent, button.property("MRML_NODE_CLASS"))
-    else:
-      for w in ModuleWidgetMixin.getAllVisibleWidgets():
-        w.enabled = True
-        w.setStyleSheet("")
-      self.invokeEvent(self.AnnotationToolDeselectedEvent, button.property("MRML_NODE_CLASS"))
-
   def _cleanupConnections(self):
-    self._annotationButtonGroup.disconnect("buttonClicked(QAbstractButton*)", self._onAnnotationButtonClicked)
+    self.visibilityButton.toggled.disconnect(self._onVisibilityButtonToggled)
 
   def _processData(self, caller=None, event=None):
-    self._seriesTypeLabel.text = self._seriesType.getName()
-
-  @staticmethod
-  def getIconFromMRMLNodeClass(name):
-    modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
-    return qt.QIcon(os.path.join(modulePath, 'Resources', 'Icons', AnnotationItemWidget.ICON_MAP[name]))
-
-  @staticmethod
-  def getIconFromMRMLNode(mrmlNode):
-    return AnnotationItemWidget.getIconFromMRMLNodeClass(mrmlNode.__class__.__name__)
+    self._seriesTypeLabel.text = "{}: {}".format(ModuleLogicMixin.getDICOMValue(self._seriesType.getVolume(),
+                                                                                DICOMTAGS.SERIES_NUMBER),
+                                                 self._seriesType.getName())
 
   def getSeriesType(self):
     return self._seriesType

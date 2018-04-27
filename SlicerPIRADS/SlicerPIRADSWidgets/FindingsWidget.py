@@ -5,8 +5,9 @@ import os
 import slicer
 import logging
 
-from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
+from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin, ModuleWidgetMixin
 from SlicerDevelopmentToolboxUtils.icons import Icons
+from SlicerDevelopmentToolboxUtils.decorators import onExceptionReturnNone
 
 from SlicerPIRADSLogic.Finding import Finding
 from SlicerPIRADSLogic.SeriesType import SeriesTypeFactory
@@ -34,18 +35,21 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
   def _loadUI(self):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingsWidget.ui')
     self.ui = slicer.util.loadUI(path)
+    self._prostateMapDialog = None
     self._addFindingsButton = self.ui.findChild(qt.QPushButton, "addFindingsButton")
     self._removeFindingsButton = self.ui.findChild(qt.QPushButton, "removeFindingsButton")
     self._titleLabel = self.ui.findChild(qt.QLabel, "titleLabel")
     self._findingsListView = self.ui.findChild(qt.QListView, "findingsListView")
     self._findingsListModel = FindingsListModel()
     self._findingsListView.setModel(self._findingsListModel)
+    self._prostateMapButton = self.ui.findChild(qt.QPushButton, "prostateMapButton")
+    self._prostateMapButton.setIcon(Icons.text_info)
     self._findingInformationFrame = self.ui.findChild(qt.QFrame, "findingInformationFrame")
-    self._findingInformationFrame.setLayout(qt.QGridLayout())
     self._updateButtons()
 
   def _setupConnections(self):
     def setupConnections(funcName="connect"):
+      getattr(self._prostateMapButton.clicked, funcName)(self._onProstateMapButtonClicked)
       getattr(self._addFindingsButton.clicked, funcName)(self._onAddFindingsButtonClicked)
       getattr(self._removeFindingsButton.clicked, funcName)(self._onRemoveFindingRequested)
       getattr(self._findingsListView, funcName)("customContextMenuRequested(QPoint)", self._onFindingItemRightClicked)
@@ -55,6 +59,22 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
     setupConnections()
     slicer.app.connect('aboutToQuit()', self.deleteLater)
     self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
+
+  # def _onFindingNameChanged(self, text):
+  #   # TODO: what to do with empty string?
+  #   self._finding.setName(text)
+
+  def _onProstateMapButtonClicked(self):
+    row = self._findingsListView.currentIndex().row()
+    if 0 < row < self._findingsListModel.rowCount():
+      finding = self._findingsListModel.getFindings()[row]
+
+      if not self._prostateMapDialog:
+        self._prostateMapDialog = ProstateSectorMapDialog()
+      self._prostateMapDialog.setSelectedSectors(finding.getSectors())
+
+      if self._prostateMapDialog.exec_():
+        finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
   def _onFindingItemRightClicked(self, point):
     if not self._findingsListView.currentIndex() or not self._findingsListView.model().rowCount():
@@ -115,6 +135,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
     self._removeFindingsButton.setEnabled(self._findingsListView.selectedIndexes()
                                           and self._findingsListModel.rowCount() > 0)
     self._addFindingsButton.setEnabled(self._findingsListModel.rowCount() < self._maximumFindingCount)
+    self._prostateMapButton.setEnabled(-1 < self._findingsListView.currentIndex().row() < self._findingsListModel.rowCount())
 
 
 class FindingsListModel(qt.QAbstractListModel):
@@ -152,6 +173,19 @@ class FindingsListModel(qt.QAbstractListModel):
 
 class FindingInformationWidget(qt.QWidget):
 
+  ICON_MAP = {"vtkMRMLSegmentationNode": "SegmentEditor.png",
+              "vtkMRMLAnnotationRulerNode": "Ruler.png",
+              "vtkMRMLMarkupFiducialNode": "Fiducials.png"}
+
+  @staticmethod
+  def getIconFromMRMLNodeClass(name):
+    modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    return qt.QIcon(os.path.join(modulePath, 'Resources', 'Icons', FindingInformationWidget.ICON_MAP[name]))
+
+  @staticmethod
+  def getIconFromMRMLNode(mrmlNode):
+    return FindingInformationWidget.getIconFromMRMLNodeClass(mrmlNode.__class__.__name__)
+
   def __init__(self, finding, parent=None):
     qt.QWidget.__init__(self, parent)
     self._finding = finding
@@ -173,41 +207,58 @@ class FindingInformationWidget(qt.QWidget):
   def _loadUI(self):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'FindingInformationWidget.ui')
     self.ui = slicer.util.loadUI(path)
-    self._findingNameEdit = self.ui.findChild(qt.QLineEdit, "findingsNameEdit")
-    self._findingNameEdit.text = self._finding.getName()
-    self._prostateMapButton = self.ui.findChild(qt.QPushButton, "prostateMapButton")
-    self._prostateMapButton.setIconSize(qt.QSize(20, 32))
-    self._prostateMapButton.setIcon(qt.QIcon(os.path.join(self.modulePath, 'Resources', 'Icons', 'ProstateMap.png')))
-    self._prostateMapDialog = None
-    self._assessmentButton = self.ui.findChild(qt.QPushButton, "assessmentButton")
-    self._assessmentButton.setIcon(Icons.text_info)
     self._annotationListWidget = self.ui.findChild(qt.QListWidget, "annotationsListWidget")
     self._annotationToolFrame = self.ui.findChild(qt.QFrame, "annotationToolFrame")
     self._annotationToolFrame.setLayout(qt.QGridLayout())
+    self._annotationButtonGroup = self.ui.findChild(qt.QButtonGroup, "annotationButtonGroup")
+    self._annotationButtonFrame = self.ui.findChild(qt.QFrame, "annotationButtonFrame")
+    self._annotationButtonFrame.enabled = False
+    for button in self._annotationButtonGroup.buttons():
+      button.setIcon(self.getIconFromMRMLNodeClass(button.property("MRML_NODE_CLASS")))
     self._currentAnnotationToolWidget = None
     self._annotationToolWidgets = dict()
     self._fillAnnotationTable()
 
   def _setupConnections(self):
-    self._annotationListWidget.connect("currentItemChanged(QListWidgetItem *, QListWidgetItem *)",
-                                       self._onCurrentItemChanged)
-    self._findingNameEdit.textChanged.connect(self._onFindingNameChanged)
-    self._prostateMapButton.clicked.connect(self._onProstateMapButtonClicked)
+    self._annotationButtonGroup.connect("buttonToggled(QAbstractButton*, bool)", self._onAnnotationButtonClicked)
+    self._annotationListWidget.itemSelectionChanged.connect(self._onItemSelectionChanged)
     self.destroyed.connect(self._cleanupConnections)
 
-  def _onCurrentItemChanged(self, current, previous):
-    if current:
-      self._annotationListWidget.itemWidget(current).enable(True)
-    if previous:
-      self._annotationListWidget.itemWidget(previous).enable(False)
-      self._removeAnnotationToolWidget()
-
-  def _onFindingNameChanged(self, text):
-    # TODO: what to do with empty string?
-    self._finding.setName(text)
-
   def _cleanupConnections(self):
-    self._prostateMapButton.clicked.disconnect(self._onProstateMapButtonClicked)
+    self._annotationButtonGroup.disconnect("buttonToggled(QAbstractButton*, bool)", self._onAnnotationButtonClicked)
+
+  def _onAnnotationButtonClicked(self, button, checked):
+    currentItem = self._annotationListWidget.currentItem()
+    if not currentItem:
+      return
+    itemWidget = self._annotationListWidget.itemWidget(currentItem)
+    seriesType = itemWidget.getSeriesType()
+    if checked:
+      for b in self._annotationButtonGroup.buttons():
+        if b.checked and b is not button:
+          b.checked = False
+      for w in ModuleWidgetMixin.getAllVisibleWidgets():
+        enabled = seriesType.getVolume() is \
+                  slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
+        w.enabled = enabled
+        w.setStyleSheet("#frame{{border: 3px ridge {};}}".format("green" if enabled else "red"))
+      self.onAnnotationToolSelected(seriesType, button.property("MRML_NODE_CLASS"))
+    else:
+      for w in ModuleWidgetMixin.getAllVisibleWidgets():
+        w.enabled = True
+        w.setStyleSheet("")
+      self.onAnnotationToolDeselected(seriesType, button.property("MRML_NODE_CLASS"))
+
+  def _onItemSelectionChanged(self):
+    currentItem = self._annotationListWidget.currentItem()
+    self._annotationButtonFrame.enabled = currentItem is not None
+    button = self._annotationButtonGroup.checkedButton()
+    if currentItem and button:
+      if self._currentAnnotationToolWidget:
+        self._currentAnnotationToolWidget.resetInteraction()
+      self._onAnnotationButtonClicked(button, button.checked)
+    if not currentItem and not button:
+      self._removeAnnotationToolWidget()
 
   def _fillAnnotationTable(self):
     self._annotationListWidget.clear()
@@ -218,22 +269,14 @@ class FindingInformationWidget(qt.QWidget):
         self._annotationListWidget.addItem(listWidgetItem)
 
         annotationItemWidget = AnnotationItemWidget(self._finding, seriesType(volume))
-        annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolSelectedEvent,
-                                              self.onAnnotationToolSelected)
-        annotationItemWidget.addEventObserver(annotationItemWidget.AnnotationToolDeselectedEvent,
-                                              self.onAnnotationToolDeselected)
         listWidgetItem.setSizeHint(annotationItemWidget.sizeHint)
         self._annotationListWidget.setItemWidget(listWidgetItem, annotationItemWidget)
       else:
         logging.info("Could not find matching series type for volume %s" % volume.GetName())
 
-  @vtk.calldata_type(vtk.VTK_STRING)
-  def onAnnotationToolSelected(self, caller, event, callData):
-    itemWidget = self.getAnnotationItemWidgetForParameterNode(caller)
-    assert itemWidget
+  def onAnnotationToolSelected(self, seriesType, mrmlNodeCLass):
     self._removeAnnotationToolWidget()
-    seriesType = itemWidget.getSeriesType()
-    annotation = self._finding.getOrCreateAnnotation(seriesType, callData)
+    annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
     try:
       annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
       self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
@@ -248,22 +291,10 @@ class FindingInformationWidget(qt.QWidget):
         return widget
     return None
 
-  def _onProstateMapButtonClicked(self):
-    if not self._prostateMapDialog:
-      self._prostateMapDialog = ProstateSectorMapDialog()
-
-    self._prostateMapDialog.setSelectedSectors(self._finding.getSectors())
-
-    if self._prostateMapDialog.exec_():
-      self._finding.setSectors(self._prostateMapDialog.getSelectedSectors())
-
-  @vtk.calldata_type(vtk.VTK_STRING)
-  def onAnnotationToolDeselected(self, caller, event, callData):
-    itemWidget = self.getAnnotationItemWidgetForParameterNode(caller)
-    seriesType = itemWidget.getSeriesType()
-    annotation = self._finding.getOrCreateAnnotation(seriesType, callData)
+  def onAnnotationToolDeselected(self, seriesType, mrmlNodeCLass):
+    annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
     if not annotation.mrmlNode:
-      self._finding.deleteAnnotation(seriesType, callData)
+      self._finding.deleteAnnotation(seriesType, mrmlNodeCLass)
     self._removeAnnotationToolWidget()
 
   def _removeAnnotationToolWidget(self):

@@ -72,13 +72,10 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     ScriptedLoadableModuleWidget.setup(self)
     self.setupViewSettingGroupBox()
-    self._loadDataButton = UICreationHelpers.createButton("Load Data")
-    self._loadDataButton.setIcon(Icons.open)
     self._setupCollapsibleLayoutButton()
     self._setupCollapsibleMultiVolumeExplorerButton()
     self._studyAssessmentWidget = StudyAssessmentWidget()
     self._findingsWidget = FindingsWidget(maximumNumber=4)
-    self.layout.addWidget(self._loadDataButton)
     self.layout.addWidget(self._collapsibleLayoutButton)
     # self.layout.addWidget(self._collapsibleMultiVolumeButton)
     self.layout.addWidget(self._studyAssessmentWidget)
@@ -91,10 +88,13 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.updateGUIFromData()
 
   def setupViewSettingGroupBox(self):
-    self.crosshairButton = CrosshairButton()
-    self.settingsButton = ModuleSettingsButton(self.moduleName)
-    self.settingsButton.enabled = False
-    self.layout.addWidget(UICreationHelpers.createHLayout([self.crosshairButton, self.settingsButton]))
+    self._loadDataButton = UICreationHelpers.createButton("", toolTip="Load Data")
+    self._loadDataButton.setIcon(Icons.open)
+    self._crosshairButton = CrosshairButton()
+    self._settingsButton = ModuleSettingsButton(self.moduleName)
+    self._settingsButton.enabled = False
+    self.layout.addWidget(UICreationHelpers.createHLayout([self._loadDataButton, self._crosshairButton,
+                                                           self._settingsButton]))
 
   def _setupCollapsibleLayoutButton(self):
     self._collapsibleLayoutButton = ctk.ctkCollapsibleButton()
