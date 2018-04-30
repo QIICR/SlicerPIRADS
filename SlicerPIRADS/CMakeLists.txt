@@ -5,31 +5,33 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/__init__.py
   SlicerPIRADSLogic/Configuration.py
   SlicerPIRADSLogic/Annotation.py
+  SlicerPIRADSLogic/Exception.py
   SlicerPIRADSLogic/Finding.py
   SlicerPIRADSLogic/HangingProtocol.py
   SlicerPIRADSLogic/SeriesType.py
   SlicerPIRADSWidgets/__init__.py
   SlicerPIRADSWidgets/AnnotationWidget.py
   SlicerPIRADSWidgets/FindingsWidget.py
+  SlicerPIRADSWidgets/AssessmentWidget.py
   SlicerPIRADSWidgets/ProstateSectorMapDialog.py
   SlicerPIRADSWidgets/DataSelectionDialog.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/default.cfg
-  Resources/Forms/Clinical_Information.json
-  Resources/Forms/Procedure_Information.json
-  Resources/UI/DataSelectionDialog.ui
+  Resources/Forms/Imaging_Study_Information.json
+  Resources/Forms/Patient_Clinical_Information.json
   Resources/UI/AnnotationItemWidget.ui
+  Resources/UI/DataSelectionDialog.ui
   Resources/UI/FindingsWidget.ui
   Resources/UI/FindingInformationWidget.ui
-  Resources/UI/AnnotationItemWidget.ui
   Resources/UI/ProstateSectorMapDialog.ui
-  Resources/UI/StudyLevelAssessmentWidget.ui
+  Resources/UI/AssessmentWidget.ui
   Resources/Icons/Fiducials.png
   Resources/Icons/ProstateMap.png
   Resources/Icons/Ruler.png
   Resources/Icons/SegmentEditor.png
+  Resources/Images/prostate_sector_map.png
 )
 
 slicerMacroBuildScriptedModule(
