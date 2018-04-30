@@ -10,8 +10,8 @@ class SlicerPIRADSConfiguration(GeneralModuleMixin):
     self.loadConfiguration()
 
   def loadConfiguration(self):
-
     config = ConfigParser.RawConfigParser()
     config.read(self.configFile)
 
-    self.setSetting("Study_Assessment_Forms", config.get('Study Assessment Forms', 'schema_files'))
+    self.setSetting("Study_Assessment_Forms", config.get('Assessment Forms', 'study_schema_files'))
+    self.setSetting("Patient_Assessment_Forms", config.get('Assessment Forms', 'patient_schema_files'))

@@ -20,7 +20,7 @@ from SlicerDevelopmentToolboxUtils.constants import DICOMTAGS
 
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
-from SlicerPIRADSWidgets.StudyAssessmentWidget import StudyAssessmentWidget
+from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
 from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
 
@@ -74,7 +74,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
       self._patientWatchBox.sourceFile = filename
     except:
       self._patientWatchBox.sourceFile = None
-    return
+    self._patientAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._studyAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
 
@@ -87,14 +87,19 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._setupViewSettingGroupBox()
     self._setupCollapsibleLayoutButton()
     self._setupCollapsibleMultiVolumeExplorerButton()
-    self._studyAssessmentWidget = StudyAssessmentWidget()
+    self._patientAssessmentWidget = AssessmentWidget(forms=self.getSetting("Patient_Assessment_Forms"),
+                                                   title="Patient Level Assessment")
+    self._studyAssessmentWidget = AssessmentWidget(forms=self.getSetting("Study_Assessment_Forms"),
+                                                   title="Study Level Assessment")
     self._findingsWidget = FindingsWidget(maximumNumber=4)
     self.layout.addWidget(self._collapsibleLayoutButton)
     # self.layout.addWidget(self._collapsibleMultiVolumeButton)
+    self.layout.addWidget(self._patientAssessmentWidget)
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._findingsWidget)
     self._stepButtonGroup = qt.QButtonGroup()
-    self._stepButtonGroup.addButton(self._studyAssessmentWidget, 1)
+    self._stepButtonGroup.addButton(self._patientAssessmentWidget, 1)
+    self._stepButtonGroup.addButton(self._studyAssessmentWidget, 2)
     self._stepButtonGroup.addButton(self._findingsWidget, 3)
     self.layout.addStretch(1)
     self._setupConnections()
@@ -169,9 +174,8 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
         self.logic.viewerPerVolume(volumeNodes=self._loadedVolumeNodes.values(), layout=self._hangingProtocol.LAYOUT,
                                    background=background)
         ModuleWidgetMixin.linkAllSliceWidgets(1)
-        sliceWidgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
-        if sliceWidgets:
-          sliceWidget = sliceWidgets[0].mrmlSliceNode().RotateToVolumePlane(background)
+        for sliceWidget in ModuleWidgetMixin.getAllVisibleWidgets():
+          sliceWidget.mrmlSliceNode().RotateToVolumePlane(background)
         # self.checkForMultiVolumes()
     except Exception as exc:
       logging.error(exc.message)
