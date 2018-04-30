@@ -6,6 +6,7 @@ import ctk
 import logging
 import string
 from slicer.ScriptedLoadableModule import *
+from collections import OrderedDict
 
 from qSlicerMultiVolumeExplorerModuleWidget import qSlicerMultiVolumeExplorerSimplifiedModuleWidget
 from qSlicerMultiVolumeExplorerModuleHelper import qSlicerMultiVolumeExplorerModuleHelper as MVHelper
@@ -53,14 +54,14 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   @loadedVolumeNodes.setter
   def loadedVolumeNodes(self, volumes):
-    self._loadedVolumeNodes = volumes
+    self._loadedVolumeNodes = OrderedDict({volume.GetID: volume for volume in volumes})
     self.updateGUIFromData()
 
   def __init__(self, parent=None):
     ScriptedLoadableModuleWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
-    self._loadedVolumeNodes = []
+    self._loadedVolumeNodes = OrderedDict()
     self.logic = SlicerPIRADSModuleLogic()
 
   def updateGUIFromData(self):
@@ -69,7 +70,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def setup(self):
     # TODO: following line is only for the purpose of testing
-    self._loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
+    self.loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
     ScriptedLoadableModuleWidget.setup(self)
     self.setupViewSettingGroupBox()
     self._setupCollapsibleLayoutButton()
@@ -133,22 +134,28 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def _onLoadButtonClicked(self):
     self._dataSelectionDialog = DataSelectionDialog()
-    self._loadedVolumeNodes = []
+    self._loadedVolumeNodes = OrderedDict()
 
-    sceneObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self._onVolumeNodeAdded)
+    nodeAddedObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self._onVolumeNodeAdded)
+    nodeRemovedObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeRemovedEvent, self._onVolumeNodeRemoved)
     try:
       if self._dataSelectionDialog.exec_():
-        self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(self._loadedVolumeNodes)
+        self._hangingProtocol = HangingProtocolFactory.getHangingProtocol(self.loadedVolumeNodes.values())
         if not self._hangingProtocol:
           raise RuntimeError("No eligible hanging protocol found.")
-        self.logic.viewerPerVolume(volumeNodes=self._loadedVolumeNodes, layout=self._hangingProtocol.LAYOUT,
-                                   background=self._loadedVolumeNodes[0])
+        background = self._loadedVolumeNodes.values()[0]
+        self.logic.viewerPerVolume(volumeNodes=self._loadedVolumeNodes.values(), layout=self._hangingProtocol.LAYOUT,
+                                   background=background)
         ModuleWidgetMixin.linkAllSliceWidgets(1)
+        sliceWidgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
+        if sliceWidgets:
+          sliceWidget = sliceWidgets[0].mrmlSliceNode().RotateToVolumePlane(background)
         self.checkForMultiVolumes()
     except Exception as exc:
       logging.error(exc.message)
     finally:
-      slicer.mrmlScene.RemoveObserver(sceneObserver)
+      slicer.mrmlScene.RemoveObserver(nodeAddedObserver)
+      slicer.mrmlScene.RemoveObserver(nodeRemovedObserver)
       self.updateGUIFromData()
 
   def checkForMultiVolumes(self):
@@ -172,7 +179,15 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def _onVolumeNodeAdded(self, caller, event, callData):
     if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
-      self._loadedVolumeNodes.append(callData)
+      self._loadedVolumeNodes[callData.GetID()] = callData
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def _onVolumeNodeRemoved(self, caller, event, callData):
+    if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
+      try:
+        del self._loadedVolumeNodes[callData.GetID()]
+      except KeyError:
+        pass
 
 
 class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):

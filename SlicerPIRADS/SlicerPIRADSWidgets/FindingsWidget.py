@@ -66,7 +66,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
   def _onProstateMapButtonClicked(self):
     row = self._findingsListView.currentIndex().row()
-    if 0 < row < self._findingsListModel.rowCount():
+    if -1 < row < self._findingsListModel.rowCount():
       finding = self._findingsListModel.getFindings()[row]
 
       if not self._prostateMapDialog:
@@ -238,10 +238,10 @@ class FindingInformationWidget(qt.QWidget):
         if b.checked and b is not button:
           b.checked = False
       for w in ModuleWidgetMixin.getAllVisibleWidgets():
-        enabled = seriesType.getVolume() is \
+        enabled = w.mrmlSliceCompositeNode().GetForegroundVolumeID() is not None and seriesType.getVolume() is \
                   slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
         w.enabled = enabled
-        w.setStyleSheet("#frame{{border: 3px ridge {};}}".format("green" if enabled else "red"))
+        w.setStyleSheet("#frame{{border: 5px ridge {};}}".format("green" if enabled else "black"))
       self.onAnnotationToolSelected(seriesType, button.property("MRML_NODE_CLASS"))
     else:
       for w in ModuleWidgetMixin.getAllVisibleWidgets():
