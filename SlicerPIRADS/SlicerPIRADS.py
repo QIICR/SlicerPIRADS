@@ -14,6 +14,9 @@ from qSlicerMultiVolumeExplorerModuleHelper import qSlicerMultiVolumeExplorerMod
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleWidgetMixin
 from SlicerDevelopmentToolboxUtils.icons import Icons
 from SlicerDevelopmentToolboxUtils.buttons import ModuleSettingsButton, CrosshairButton
+from SlicerDevelopmentToolboxUtils.helpers import WatchBoxAttribute
+from SlicerDevelopmentToolboxUtils.widgets import DICOMBasedInformationWatchBox
+from SlicerDevelopmentToolboxUtils.constants import DICOMTAGS
 
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
@@ -65,14 +68,23 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.logic = SlicerPIRADSModuleLogic()
 
   def updateGUIFromData(self):
+    try:
+      instanceUID = self._loadedVolumeNodes.values()[0].GetAttribute("DICOM.instanceUIDs").split(" ")[0]
+      filename = slicer.dicomDatabase.fileForInstance(instanceUID)
+      self._patientWatchBox.sourceFile = filename
+    except:
+      self._patientWatchBox.sourceFile = None
+    return
     self._studyAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
 
   def setup(self):
     # TODO: following line is only for the purpose of testing
-    self.loadedVolumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
+    self._loadedVolumeNodes = OrderedDict({volume.GetID: volume for volume
+                                           in slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')})
     ScriptedLoadableModuleWidget.setup(self)
-    self.setupViewSettingGroupBox()
+    self._setupPatientWatchBox()
+    self._setupViewSettingGroupBox()
     self._setupCollapsibleLayoutButton()
     self._setupCollapsibleMultiVolumeExplorerButton()
     self._studyAssessmentWidget = StudyAssessmentWidget()
@@ -88,7 +100,17 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._setupConnections()
     self.updateGUIFromData()
 
-  def setupViewSettingGroupBox(self):
+  def _setupPatientWatchBox(self):
+    WatchBoxAttribute.TRUNCATE_LENGTH = 20
+    patientWatchBoxInformation = [WatchBoxAttribute('PatientName', "Patient's Name: ", DICOMTAGS.PATIENT_NAME),
+                                  WatchBoxAttribute('PatientID', 'Patient ID: ', DICOMTAGS.PATIENT_ID),
+                                  WatchBoxAttribute('DOB', "Patient's Birth Date: ", DICOMTAGS.PATIENT_BIRTH_DATE),
+                                  WatchBoxAttribute('StudyDate', 'Study Date: ', DICOMTAGS.STUDY_DATE)]
+    self._patientWatchBox = DICOMBasedInformationWatchBox(patientWatchBoxInformation, title="Patient Information",
+                                                         columns=2)
+    self.layout.addWidget(self._patientWatchBox)
+
+  def _setupViewSettingGroupBox(self):
     self._loadDataButton = UICreationHelpers.createButton("", toolTip="Load Data")
     self._loadDataButton.setIcon(Icons.open)
     self._crosshairButton = CrosshairButton()
@@ -150,7 +172,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
         sliceWidgets = list(ModuleWidgetMixin.getAllVisibleWidgets())
         if sliceWidgets:
           sliceWidget = sliceWidgets[0].mrmlSliceNode().RotateToVolumePlane(background)
-        self.checkForMultiVolumes()
+        # self.checkForMultiVolumes()
     except Exception as exc:
       logging.error(exc.message)
     finally:
