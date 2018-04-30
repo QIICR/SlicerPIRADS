@@ -8,7 +8,7 @@ class HangingProtocolFactory(object):
 
   @staticmethod
   def getHangingProtocol(volumeNodes):
-    if len(volumeNodes) == 4:
+    if len(volumeNodes) <= 4:
       return PIRADSHangingProtocolP1
     elif 4 < len(volumeNodes) < 7:
       return PIRADSHangingProtocolP2
