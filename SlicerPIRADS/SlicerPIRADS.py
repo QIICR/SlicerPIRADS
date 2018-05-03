@@ -23,6 +23,7 @@ from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
 from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
 from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
+from SlicerPIRADSWidgets.ProstateWidget import ProstateWidget
 
 from SlicerLayoutButtons import SlicerLayoutButtonsWidget
 
@@ -76,6 +77,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
       self._patientWatchBox.sourceFile = None
     self._patientAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._studyAssessmentWidget.enabled = len(self._loadedVolumeNodes) > 0
+    self._prostateMeasurementsWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
 
   def setup(self):
@@ -91,16 +93,20 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
                                                    title="Patient Level Assessment")
     self._studyAssessmentWidget = AssessmentWidget(forms=self.getSetting("Study_Assessment_Forms"),
                                                    title="Study Level Assessment")
+    self._prostateMeasurementsWidget = ProstateWidget()
+
     self._findingsWidget = FindingsWidget(maximumNumber=4)
     self.layout.addWidget(self._collapsibleLayoutButton)
     # self.layout.addWidget(self._collapsibleMultiVolumeButton)
     self.layout.addWidget(self._patientAssessmentWidget)
     self.layout.addWidget(self._studyAssessmentWidget)
+    self.layout.addWidget(self._prostateMeasurementsWidget)
     self.layout.addWidget(self._findingsWidget)
     self._stepButtonGroup = qt.QButtonGroup()
     self._stepButtonGroup.addButton(self._patientAssessmentWidget, 1)
     self._stepButtonGroup.addButton(self._studyAssessmentWidget, 2)
-    self._stepButtonGroup.addButton(self._findingsWidget, 3)
+    self._stepButtonGroup.addButton(self._prostateMeasurementsWidget, 3)
+    self._stepButtonGroup.addButton(self._findingsWidget, 4)
     self.layout.addStretch(1)
     self._setupConnections()
     self.updateGUIFromData()
