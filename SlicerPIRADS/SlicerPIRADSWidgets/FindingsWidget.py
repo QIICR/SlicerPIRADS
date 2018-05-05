@@ -278,7 +278,7 @@ class FindingInformationWidget(qt.QWidget):
     self._removeAnnotationToolWidget()
     annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
     try:
-      annotationWidgetClass = AnnotationWidgetFactory.getAnnotationWidgetForMRMLNode(annotation.mrmlNode)
+      annotationWidgetClass = AnnotationWidgetFactory.getEligibleAnnotationWidgetClass(annotation.mrmlNode)
       self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
     except (AttributeError, TypeError):
       pass

@@ -7,7 +7,14 @@ from SlicerDevelopmentToolboxUtils.forms.FormsDialog import FormsDialog
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
 from SlicerDevelopmentToolboxUtils.icons import Icons
 
+
 class AssessmentWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
+  """ AssessmentWidget provides a collapsible user interface for assessing and checking assessment status of form(s)
+
+  :param forms: list of json forms
+  :param title: title of the collapsible button
+  :param parent: parent widget
+  """
 
   def __init__(self, forms, title, parent=None):
     ctk.ctkCollapsibleButton.__init__(self, parent)
@@ -47,6 +54,10 @@ class AssessmentWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
       self._assessmentButton.setToolTip("Modify assessment")
 
   def getData(self):
+    """ Return user entered data in form of a dictionary
+
+    :return: dictionary that holds data entered by the user
+    """
     try:
       return self._assessmentFormWidget.getData()
     except AttributeError:

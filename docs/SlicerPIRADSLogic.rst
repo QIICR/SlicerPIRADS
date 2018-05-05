@@ -44,14 +44,6 @@ SlicerPIRADSLogic.HangingProtocol module
     :undoc-members:
     :show-inheritance:
 
-SlicerPIRADSLogic.LesionAssessmentRules module
-----------------------------------------------
-
-.. automodule:: SlicerPIRADSLogic.LesionAssessmentRules
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 SlicerPIRADSLogic.SeriesType module
 -----------------------------------
 

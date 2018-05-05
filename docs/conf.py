@@ -14,8 +14,35 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.abspath('../..')))
+sys.path.insert(0, os.path.join(os.path.abspath('../SlicerPIRADS')))
 
+from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+  @classmethod
+  def __getattr__(cls, name):
+    return Mock()
+  def __mul__(self, other):
+    return Mock()
+  def __rmul__(self, other):
+    return Mock()
+  def __pow__(self, other):
+    return Mock()
+  def __div__(self, other):
+    return Mock()
+  def __add__(self, other):
+    return Mock()
+  def __radd__(self, other):
+    return Mock()
+
+
+MOCK_MODULES = ['vtk', 'SegmentEditor']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
+
+autodoc_mock_imports = ['qt', 'DICOMLib', 'slicer', 'vtk.vtkCommand.UserEvent', 'ctk', 'SimpleITK', 'sitkUtils',
+                        'qSlicerMultiVolumeExplorerModuleWidget', 'qSlicerMultiVolumeExplorerModuleHelper',
+                        'SlicerDevelopmentToolboxUtils', 'DICOMQIICRXLoaderPlugin', 'SlicerLayoutButtons']
 
 # -- Project information -----------------------------------------------------
 

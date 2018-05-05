@@ -4,12 +4,8 @@ import qt
 import vtk
 import ctk
 import logging
-import string
-from slicer.ScriptedLoadableModule import *
+from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic
 from collections import OrderedDict
-
-from qSlicerMultiVolumeExplorerModuleWidget import qSlicerMultiVolumeExplorerSimplifiedModuleWidget
-from qSlicerMultiVolumeExplorerModuleHelper import qSlicerMultiVolumeExplorerModuleHelper as MVHelper
 
 from SlicerDevelopmentToolboxUtils.mixins import UICreationHelpers, GeneralModuleMixin, ModuleWidgetMixin
 from SlicerDevelopmentToolboxUtils.icons import Icons
@@ -26,6 +22,47 @@ from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
 from SlicerPIRADSWidgets.ProstateWidget import ProstateWidget
 
 from SlicerLayoutButtons import SlicerLayoutButtonsWidget
+
+
+# from qSlicerMultiVolumeExplorerModuleWidget import qSlicerMultiVolumeExplorerSimplifiedModuleWidget
+# from qSlicerMultiVolumeExplorerModuleHelper import qSlicerMultiVolumeExplorerModuleHelper as MVHelper
+#
+#
+# class SlicerPIRADSMultiVolumeExplorer(qSlicerMultiVolumeExplorerSimplifiedModuleWidget):
+#
+#   def getCurrentSeriesNumber(self):
+#     ref = -1
+#     if self._bgMultiVolumeNode:
+#       name = self._bgMultiVolumeNode.GetName()
+#       ref = string.split(name,':')[0]
+#     return ref
+#
+#   def showInputMultiVolumeSelector(self, show):
+#     if show:
+#       self._bgMultiVolumeSelectorLabel.show()
+#       self.bgMultiVolumeSelector.show()
+#     else:
+#       self._bgMultiVolumeSelectorLabel.hide()
+#       self.bgMultiVolumeSelector.hide()
+#
+#   def setMultiVolume(self, node):
+#     self.bgMultiVolumeSelector.setCurrentNode(node)
+#
+#   def createChart(self, sliceWidget, position):
+#     self._multiVolumeIntensityChart.createChart(sliceWidget, position, ignoreCurrentBackground=True)
+#
+#   def refreshGUIForNewBackgroundImage(self):
+#     self._multiVolumeIntensityChart.reset()
+#     self.setFramesEnabled(True)
+#     self.refreshFrameSlider()
+#     self._multiVolumeIntensityChart.bgMultiVolumeNode = self._bgMultiVolumeNode
+#
+#   def onBackgroundInputChanged(self):
+#     qSlicerMultiVolumeExplorerSimplifiedModuleWidget.onBackgroundInputChanged(self)
+#     self.popupChartButton.setEnabled(self._bgMultiVolumeNode is not None)
+#
+#   def onSliderChanged(self, frameId):
+#     return
 
 
 class SlicerPIRADS(ScriptedLoadableModule):
@@ -51,9 +88,11 @@ class SlicerPIRADS(ScriptedLoadableModule):
 
 
 class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
+  """ Main SlicerPIRADS module widget """
 
   @property
   def loadedVolumeNodes(self):
+    """ Volume nodes of type or subclass slicer.vtkMRMLScalarVolumeNode that has been loaded into the mrmlScene """
     return self._loadedVolumeNodes
 
   @loadedVolumeNodes.setter
@@ -81,6 +120,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
 
   def setup(self):
+    """ Setup all UI elements and prepare data """
     # TODO: following line is only for the purpose of testing
     self._loadedVolumeNodes = OrderedDict({volume.GetID: volume for volume
                                            in slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')})
@@ -88,7 +128,6 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._setupPatientWatchBox()
     self._setupViewSettingGroupBox()
     self._setupCollapsibleLayoutButton()
-    self._setupCollapsibleMultiVolumeExplorerButton()
     self._patientAssessmentWidget = AssessmentWidget(forms=self.getSetting("Patient_Assessment_Forms"),
                                                    title="Patient Level Assessment")
     self._studyAssessmentWidget = AssessmentWidget(forms=self.getSetting("Study_Assessment_Forms"),
@@ -97,6 +136,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
     self._findingsWidget = FindingsWidget(maximumNumber=4)
     self.layout.addWidget(self._collapsibleLayoutButton)
+    # self._setupCollapsibleMultiVolumeExplorerButton()
     # self.layout.addWidget(self._collapsibleMultiVolumeButton)
     self.layout.addWidget(self._patientAssessmentWidget)
     self.layout.addWidget(self._studyAssessmentWidget)
@@ -140,17 +180,18 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._layoutButtonsWidget.hideReloadAndTestArea()
     self._layoutButtonsWidget.setDisplayForegroundOnly()
 
-  def _setupCollapsibleMultiVolumeExplorerButton(self):
-    self._collapsibleMultiVolumeButton = ctk.ctkCollapsibleButton()
-    self._collapsibleMultiVolumeButton.text = "MultiVolumeExplorer"
-    self._collapsibleMultiVolumeButton.collapsed = True
-    self._collapsibleMultiVolumeButton.setLayout(qt.QFormLayout())
-    self._multiVolumeExplorer = SlicerPIRADSMultiVolumeExplorer(self._collapsibleMultiVolumeButton.layout())
-    self._multiVolumeExplorer.setup()
-
   def _setupConnections(self):
     self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
     # self._multiVolumeExplorer.frameSlider.connect('valueChanged(double)', self.onSliderChanged)
+
+
+  # def _setupCollapsibleMultiVolumeExplorerButton(self):
+  #   self._collapsibleMultiVolumeButton = ctk.ctkCollapsibleButton()
+  #   self._collapsibleMultiVolumeButton.text = "MultiVolumeExplorer"
+  #   self._collapsibleMultiVolumeButton.collapsed = True
+  #   self._collapsibleMultiVolumeButton.setLayout(qt.QFormLayout())
+  #   self._multiVolumeExplorer = SlicerPIRADSMultiVolumeExplorer(self._collapsibleMultiVolumeButton.layout())
+  #   self._multiVolumeExplorer.setup()
 
   # def onSliderChanged(self, newValue):
   #   newValue = int(newValue)
@@ -182,7 +223,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
         ModuleWidgetMixin.linkAllSliceWidgets(1)
         for sliceWidget in ModuleWidgetMixin.getAllVisibleWidgets():
           sliceWidget.mrmlSliceNode().RotateToVolumePlane(background)
-        # self.checkForMultiVolumes()
+        # self._checkForMultiVolumes()
     except Exception as exc:
       logging.error(exc.message)
     finally:
@@ -190,23 +231,23 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
       slicer.mrmlScene.RemoveObserver(nodeRemovedObserver)
       self.updateGUIFromData()
 
-  def checkForMultiVolumes(self):
-    multiVolumes = slicer.util.getNodesByClass('vtkMRMLMultiVolumeNode')
-    self._multiVolumeExplorer.showInputMultiVolumeSelector(len(multiVolumes) > 1)
-    multiVolume = None
-    if len(multiVolumes) == 1:
-      multiVolume = multiVolumes[0]
-    elif len(multiVolumes) > 1:
-      multiVolume = max(multiVolumes, key=lambda mv: mv.GetNumberOfFrames)
-      # TODO: set selector
-    self._multiVolumeExplorer.setMultiVolume(multiVolume)
-    self.showMultiVolumeExplorer(len(multiVolumes) > 0)
-
-  def showMultiVolumeExplorer(self, show):
-    if show:
-      self._collapsibleMultiVolumeButton.show()
-    else:
-      self._collapsibleMultiVolumeButton.hide()
+  # def _checkForMultiVolumes(self):
+  #   multiVolumes = slicer.util.getNodesByClass('vtkMRMLMultiVolumeNode')
+  #   self._multiVolumeExplorer.showInputMultiVolumeSelector(len(multiVolumes) > 1)
+  #   multiVolume = None
+  #   if len(multiVolumes) == 1:
+  #     multiVolume = multiVolumes[0]
+  #   elif len(multiVolumes) > 1:
+  #     multiVolume = max(multiVolumes, key=lambda mv: mv.GetNumberOfFrames)
+  #     # TODO: set selector
+  #   self._multiVolumeExplorer.setMultiVolume(multiVolume)
+  #   self._showMultiVolumeExplorer(len(multiVolumes) > 0)
+  #
+  # def _showMultiVolumeExplorer(self, show):
+  #   if show:
+  #     self._collapsibleMultiVolumeButton.show()
+  #   else:
+  #     self._collapsibleMultiVolumeButton.hide()
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def _onVolumeNodeAdded(self, caller, event, callData):
@@ -260,44 +301,8 @@ class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
       sliceWidget.fitSliceToBackground()
 
 
-class SlicerPIRADSMultiVolumeExplorer(qSlicerMultiVolumeExplorerSimplifiedModuleWidget):
-
-  def getCurrentSeriesNumber(self):
-    ref = -1
-    if self._bgMultiVolumeNode:
-      name = self._bgMultiVolumeNode.GetName()
-      ref = string.split(name,':')[0]
-    return ref
-
-  def showInputMultiVolumeSelector(self, show):
-    if show:
-      self._bgMultiVolumeSelectorLabel.show()
-      self.bgMultiVolumeSelector.show()
-    else:
-      self._bgMultiVolumeSelectorLabel.hide()
-      self.bgMultiVolumeSelector.hide()
-
-  def setMultiVolume(self, node):
-    self.bgMultiVolumeSelector.setCurrentNode(node)
-
-  def createChart(self, sliceWidget, position):
-    self._multiVolumeIntensityChart.createChart(sliceWidget, position, ignoreCurrentBackground=True)
-
-  def refreshGUIForNewBackgroundImage(self):
-    self._multiVolumeIntensityChart.reset()
-    self.setFramesEnabled(True)
-    self.refreshFrameSlider()
-    self._multiVolumeIntensityChart.bgMultiVolumeNode = self._bgMultiVolumeNode
-
-  def onBackgroundInputChanged(self):
-    qSlicerMultiVolumeExplorerSimplifiedModuleWidget.onBackgroundInputChanged(self)
-    self.popupChartButton.setEnabled(self._bgMultiVolumeNode is not None)
-
-  def onSliderChanged(self, frameId):
-    return
-
-
 class SlicerPIRADSSlicelet(qt.QWidget):
+  """ SlicerPIRADSSlicelet takes complexity away so that the user can focus on their tasks with less confusion """
 
   def __init__(self):
     qt.QWidget.__init__(self)
@@ -305,7 +310,7 @@ class SlicerPIRADSSlicelet(qt.QWidget):
     self.mainWidget.objectName = "qSlicerAppMainWindow"
     self.mainWidget.setLayout(qt.QHBoxLayout())
 
-    self.setupLayoutWidget()
+    self._setupLayoutWidget()
 
     self.moduleFrame = qt.QWidget()
     self.moduleFrame.setLayout(qt.QVBoxLayout())
@@ -321,7 +326,7 @@ class SlicerPIRADSSlicelet(qt.QWidget):
     self.splitter.setOrientation(qt.Qt.Horizontal)
     self.splitter.addWidget(self.scrollArea)
     self.splitter.addWidget(self.layoutWidget)
-    self.splitter.splitterMoved.connect(self.onSplitterMoved)
+    self.splitter.splitterMoved.connect(self._onSplitterMoved)
 
     self.splitter.setStretchFactor(0, 0)
     self.splitter.setStretchFactor(1, 1)
@@ -329,9 +334,9 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 
     self.mainWidget.layout().addWidget(self.splitter)
     self.mainWidget.show()
-    self.configureStyle()
+    self._configureStyle()
 
-  def configureStyle(self):
+  def _configureStyle(self):
     slicer.app.setStyleSheet("""
       QWidget{
         background-color: #555555;
@@ -339,7 +344,7 @@ class SlicerPIRADSSlicelet(qt.QWidget):
       }
     """)
 
-  def setupLayoutWidget(self):
+  def _setupLayoutWidget(self):
     # TODO: configurable ...
     self.layoutWidget = qt.QWidget()
     self.layoutWidget.setLayout(qt.QHBoxLayout())
@@ -354,15 +359,15 @@ class SlicerPIRADSSlicelet(qt.QWidget):
 
   def eventFilter(self, obj, event):
     if event.type() == qt.QEvent.MouseButtonDblClick:
-      self.onSplitterClick()
+      self._onSplitterClick()
 
-  def onSplitterMoved(self, pos, index):
+  def _onSplitterMoved(self, pos, index):
     vScroll = self.scrollArea.verticalScrollBar()
     vScrollbarWidth = 4 if not vScroll.isVisible() else vScroll.width + 4
     if self.scrollArea.minimumWidth != self.widget.parent.minimumSizeHint.width() + vScrollbarWidth:
       self.scrollArea.setMinimumWidth(self.widget.parent.minimumSizeHint.width() + vScrollbarWidth)
 
-  def onSplitterClick(self):
+  def _onSplitterClick(self):
     if self.splitter.sizes()[0] > 0:
       self.splitter.setSizes([0, self.splitter.sizes()[1]])
     else:
