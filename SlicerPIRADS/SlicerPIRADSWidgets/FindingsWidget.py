@@ -74,6 +74,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
       self._prostateMapDialog.setSelectedSectors(finding.getSectors())
 
       if self._prostateMapDialog.exec_():
+        # TODO:
         finding.setSectors(self._prostateMapDialog.getSelectedSectors())
 
   def _onFindingItemRightClicked(self, point):
@@ -280,7 +281,8 @@ class FindingInformationWidget(qt.QWidget):
     try:
       annotationWidgetClass = AnnotationWidgetFactory.getEligibleAnnotationWidgetClass(annotation.mrmlNode)
       self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
-    except (AttributeError, TypeError):
+    except (AttributeError, TypeError) as exc:
+      print exc
       pass
 
   def getAnnotationItemWidgetForParameterNode(self, pNode):

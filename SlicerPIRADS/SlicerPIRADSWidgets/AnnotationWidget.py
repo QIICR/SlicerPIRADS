@@ -34,7 +34,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.setLayout(qt.QGridLayout())
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'AnnotationItemWidget.ui')
     self.ui = slicer.util.loadUI(path)
-    self._visibilityButton = self.ui.findChild(qt.QPushButton, "_visibilityButton")
+    self._visibilityButton = self.ui.findChild(qt.QPushButton, "visibilityButton")
     self._visibilityButton.setIcon(Icons.visible_on)
     self._visibilityButton.checkable = True
     self._visibilityButton.checked = True
@@ -79,7 +79,7 @@ class AnnotationToolWidget:
   """ MRML node class that is supported by this widget"""
 
   @property
-  def annotation (self):
+  def annotation(self):
     """ Retrieves or creates the annotation that was assigned to the finding"""
     return self._finding.getOrCreateAnnotation(self._seriesType, self.MRML_NODE_CLASS)
 
@@ -117,7 +117,7 @@ class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
       seriesType(SeriesType): seriesType that the segmentation will be created for
   """
 
-  MRML_NODE_CLASS = slicer.vtkMRMLSegmentationNode
+  MRML_NODE_CLASS = "vtkMRMLSegmentationNode"
 
   def __init__(self, parent, finding, seriesType):
     AnnotationToolWidget.__init__(self, finding, seriesType)
@@ -171,6 +171,6 @@ class AnnotationWidgetFactory(object):
         widget(qt.QWidget): widget if eligible class was found, otherwise None
     """
     for mrmlNodeWidgetClass in AnnotationWidgetFactory.SUPPORTED_MRML_NODE_WIDGETS:
-      if isinstance(mrmlNode, mrmlNodeWidgetClass.MRML_NODE_CLASS):
+      if mrmlNode.__class__.__name__ == mrmlNodeWidgetClass.MRML_NODE_CLASS:
         return mrmlNodeWidgetClass
     return None
