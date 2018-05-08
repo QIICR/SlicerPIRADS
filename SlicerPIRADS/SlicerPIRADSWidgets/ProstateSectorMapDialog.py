@@ -29,7 +29,7 @@ class ProstateSectorMapDialog(object):
 
   def setSelectedSectors(self, sectors):
     for b in self._sectorButtonGroup.buttons():
-        b.checked = b.objectName in sectors
+      b.checked = b.objectName in sectors
 
   def resetButtons(self):
     for b in self._sectorButtonGroup.buttons():

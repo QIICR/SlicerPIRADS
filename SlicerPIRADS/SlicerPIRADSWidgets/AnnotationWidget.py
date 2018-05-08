@@ -27,6 +27,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._seriesType = seriesType
     self._finding = finding
+    self._finding.addEventObserver(finding.DataChangedEvent, self.onFindingDataChanged)
     self.setup()
     self._processData()
 
@@ -35,6 +36,8 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     path = os.path.join(self.modulePath, 'Resources', 'UI', 'AnnotationItemWidget.ui')
     self.ui = slicer.util.loadUI(path)
     self._visibilityButton = self.ui.findChild(qt.QPushButton, "visibilityButton")
+    self._pickList = self.ui.findChild(qt.QComboBox, "picklist")
+    self.onFindingDataChanged()
     self._visibilityButton.setIcon(Icons.visible_on)
     self._visibilityButton.checkable = True
     self._visibilityButton.checked = True
@@ -57,6 +60,16 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self._seriesTypeLabel.text = "{}: {}".format(ModuleLogicMixin.getDICOMValue(self._seriesType.getVolume(),
                                                                                 DICOMTAGS.SERIES_NUMBER),
                                                  self._seriesType.getName())
+
+  def onFindingDataChanged(self, caller=None, event=None):
+    """
+    TODO: Note that according to PI-RADS, there is preferred sequence for measuring lesions, depending on the lesion
+    location, but the reader can override the suggested sequence
+    """
+    self._pickList.clear()
+    self._pickList.addItems(self._finding.getPickList(self._seriesType))
+    self._pickList.visible = self._pickList.count
+    self._pickList.setToolTip(self._finding.getPickListTooltip(self._seriesType))
 
   def getSeriesType(self):
     """ This method returns the series type that was assigned to this widget

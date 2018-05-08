@@ -1,15 +1,18 @@
 import vtk
 from .Annotation import AnnotationFactory
+from .LesionAssessmentRules import LesionAssessmentRuleFactory
+
 from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin
 
 
 class Finding(ParameterNodeObservationMixin):
 
   DataChangedEvent = vtk.vtkCommand.UserEvent + 201
+  RuleChangedEvent = vtk.vtkCommand.UserEvent + 202
 
   def __init__(self, name):
     self._name = name
-    self._assessment = None
+    self._assessmentRule = None
     self._sectors = []
     self._annotations = dict()
 
@@ -50,6 +53,7 @@ class Finding(ParameterNodeObservationMixin):
 
   def setSectors(self, sectors):
     self._sectors = sectors
+    self._assessmentRule = LesionAssessmentRuleFactory.getEligibleLesionAssessmentRule(sectors)
     self.invokeEvent(self.DataChangedEvent)
 
   def setAllVisible(self, visible):
@@ -63,6 +67,16 @@ class Finding(ParameterNodeObservationMixin):
           annotation.setVisible(visible)
     except KeyError:
       pass
+
+  def getPickList(self, seriesType):
+    if not self._assessmentRule: # TODO: think about situations where rule is not set but sectors are...
+      return []
+    return self._assessmentRule.getPickList(seriesType)
+
+  def getPickListTooltip(self, seriesType):
+    if not self._assessmentRule: # TODO: think about situations where rule is not set but sectors are...
+      return []
+    return self._assessmentRule.getPickListTooltip(seriesType)
 
 
 class FindingAssessment(object):

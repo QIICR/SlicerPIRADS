@@ -37,18 +37,10 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
-     <item row="0" column="1">
-      <widget class="QLabel" name="seriesTypeLabel">
-       <property name="font">
-        <font>
-         <pointsize>16</pointsize>
-         <weight>75</weight>
-         <italic>true</italic>
-         <bold>true</bold>
-        </font>
-       </property>
+     <item row="0" column="0">
+      <widget class="QPushButton" name="visibilityButton">
        <property name="text">
-        <string>SeriesType</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -65,10 +57,21 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="0">
-      <widget class="QPushButton" name="visibilityButton">
+     <item row="0" column="3">
+      <widget class="QComboBox" name="picklist"/>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="seriesTypeLabel">
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <italic>true</italic>
+         <bold>true</bold>
+        </font>
+       </property>
        <property name="text">
-        <string/>
+        <string>SeriesType</string>
        </property>
       </widget>
      </item>
@@ -78,11 +81,4 @@
  </widget>
  <resources/>
  <connections/>
- <buttongroups>
-  <buttongroup name="annotationButtonGroup">
-   <property name="exclusive">
-    <bool>false</bool>
-   </property>
-  </buttongroup>
- </buttongroups>
 </ui>

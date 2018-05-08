@@ -9,6 +9,8 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/Finding.py
   SlicerPIRADSLogic/HangingProtocol.py
   SlicerPIRADSLogic/SeriesType.py
+  SlicerPIRADSLogic/LesionAssessmentRules.py
+  SlicerPIRADSLogic/Constants.py
   SlicerPIRADSWidgets/__init__.py
   SlicerPIRADSWidgets/AnnotationWidget.py
   SlicerPIRADSWidgets/FindingsWidget.py

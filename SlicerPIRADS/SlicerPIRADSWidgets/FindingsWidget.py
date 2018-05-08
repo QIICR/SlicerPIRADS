@@ -97,7 +97,6 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
       self._updateButtons()
 
   def _onAddFindingsButtonClicked(self):
-    # TODO: findings assessment
     import random
     finding = Finding("Finding %s" %random.randint(0,10))
     self._findingsListModel.addFinding(finding)
