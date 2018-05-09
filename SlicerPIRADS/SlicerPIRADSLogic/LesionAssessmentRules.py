@@ -7,6 +7,8 @@ from SlicerDevelopmentToolboxUtils.widgets import RadioButtonChoiceMessageBox
 
 
 class LesionAssessmentRule(object):
+  """ Base class for lesion based rules
+  """
 
   PATTERN = None
   PREFERRED_MEASUREMENT_SERIES_TYPES = None
@@ -82,11 +84,22 @@ class CZRule(LesionAssessmentRule):
 
 
 class LesionAssessmentRuleFactory(object):
+  """ LesionAssessmentRuleFactory offers a static method for applying lesion assessment rules depending on its location
+  """
 
   LesionAssessmentRules = [TZRule, PZRule]
 
   @classmethod
   def getEligibleLesionAssessmentRule(cls, sectors):
+    """ Returns LesionAssessmentRule for a list of sectors
+
+    Args:
+      sectors: list of sectors selected from ProstateSectorMapDialog
+
+    Returns:
+      LesionAssessmentRule: instance of LesionAssessmentRule
+
+    """
     def processUserPrompt(value):
       if not value:
         return None

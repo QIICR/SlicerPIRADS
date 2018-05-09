@@ -20,6 +20,14 @@ SlicerPIRADSLogic.Configuration module
     :undoc-members:
     :show-inheritance:
 
+SlicerPIRADSLogic.Constants module
+----------------------------------
+
+.. automodule:: SlicerPIRADSLogic.Constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 SlicerPIRADSLogic.Exception module
 ----------------------------------
 
@@ -40,6 +48,14 @@ SlicerPIRADSLogic.HangingProtocol module
 ----------------------------------------
 
 .. automodule:: SlicerPIRADSLogic.HangingProtocol
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+SlicerPIRADSLogic.LesionAssessmentRules module
+----------------------------------------------
+
+.. automodule:: SlicerPIRADSLogic.LesionAssessmentRules
     :members:
     :undoc-members:
     :show-inheritance:
