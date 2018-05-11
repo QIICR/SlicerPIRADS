@@ -156,6 +156,7 @@ class FindingsListModel(qt.QAbstractListModel):
   def removeFinding(self, finding):
     index = self._assessmentCategoryCalculator.removeFinding(finding)
     self.removeRow(index)
+    self.dataChanged(self.index(index, 0), self.index(index, 0))
 
   def rowCount(self):
     return len(self._assessmentCategoryCalculator)
@@ -281,12 +282,9 @@ class FindingInformationWidget(qt.QWidget):
   def _onAnnotationToolSelected(self, seriesType, mrmlNodeCLass):
     self._removeAnnotationToolWidget()
     annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
-    try:
-      annotationWidgetClass = AnnotationWidgetFactory.getEligibleAnnotationWidgetClass(annotation.mrmlNode)
+    annotationWidgetClass = AnnotationWidgetFactory.getEligibleAnnotationWidgetClass(annotation.mrmlNode)
+    if annotationWidgetClass:
       self._currentAnnotationToolWidget = self._getOrCreateAnnotationToolWidget(annotationWidgetClass, seriesType)
-    except (AttributeError, TypeError) as exc:
-      print exc
-      pass
 
   def _getAnnotationItemWidgetForParameterNode(self, pNode):
     for idx in range(self._annotationListWidget.count):

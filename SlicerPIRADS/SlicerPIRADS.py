@@ -119,6 +119,12 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._prostateMeasurementsWidget.enabled = len(self._loadedVolumeNodes) > 0
     self._findingsWidget.enabled = len(self._loadedVolumeNodes) > 0
 
+  def exit(self):
+    slicer.util.mainWindow().findChild(qt.QLabel, "LogoLabel").show()
+
+  def enter(self):
+    slicer.util.mainWindow().findChild(qt.QLabel, "LogoLabel").hide()
+
   def setup(self):
     """ Setup all UI elements and prepare data """
     # TODO: following line is only for the purpose of testing
@@ -297,7 +303,7 @@ class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
       compositeNode.SetForegroundOpacity(opacity)
 
       sliceNode = sliceWidget.mrmlSliceNode()
-      sliceNode.SetOrientation(orientation)
+      # sliceNode.SetOrientation(orientation)
       sliceNode.RotateToVolumePlane(volume)
       sliceWidget.fitSliceToBackground()
 
