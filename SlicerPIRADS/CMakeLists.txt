@@ -18,6 +18,7 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSWidgets/AssessmentWidget.py
   SlicerPIRADSWidgets/ProstateSectorMapDialog.py
   SlicerPIRADSWidgets/DataSelectionDialog.py
+  SlicerPIRADSWidgets/ProstateWidget.py
   )
 
 set(MODULE_PYTHON_RESOURCES
