@@ -159,6 +159,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
                                   WatchBoxAttribute('StudyDate', 'Study Date: ', DICOMTAGS.STUDY_DATE)]
     self._patientWatchBox = DICOMBasedInformationWatchBox(patientWatchBoxInformation, title="Patient Information",
                                                          columns=2)
+    self._patientWatchBox.setStyleSheet("")
     self.layout.addWidget(self._patientWatchBox)
 
   def _setupViewSettingGroupBox(self):

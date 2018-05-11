@@ -1,6 +1,7 @@
 import qt
 import ctk
 import os
+import vtk
 import slicer
 
 from SegmentEditor import SegmentEditorWidget
@@ -22,12 +23,14 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
       parent(qt.QWidget, optional): parent widget
   """
 
+  ScoreChangedEvent = vtk.vtkCommand.UserEvent + 203
+
   def __init__(self, finding, seriesType, parent=None):
     qt.QWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._seriesType = seriesType
     self._finding = finding
-    self._finding.addEventObserver(finding.DataChangedEvent, self.onFindingDataChanged)
+    self._finding.addEventObserver(finding.DataChangedEvent, self._onFindingDataChanged)
     self.setup()
     self._processData()
 
@@ -37,7 +40,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.ui = slicer.util.loadUI(path)
     self._visibilityButton = self.ui.findChild(qt.QPushButton, "visibilityButton")
     self._pickList = self.ui.findChild(qt.QComboBox, "picklist")
-    self.onFindingDataChanged()
+    self._onFindingDataChanged()
     self._visibilityButton.setIcon(Icons.visible_on)
     self._visibilityButton.checkable = True
     self._visibilityButton.checked = True
@@ -47,6 +50,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
 
   def _setupConnections(self):
     self._visibilityButton.toggled.connect(self._onVisibilityButtonToggled)
+    self._pickList.currentTextChanged.connect(lambda text: self.invokeEvent(self.ScoreChangedEvent, text))
     self.destroyed.connect(self._cleanupConnections)
 
   def _onVisibilityButtonToggled(self, checked):
@@ -54,22 +58,30 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self._finding.setSeriesTypeVisible(self._seriesType, checked)
 
   def _cleanupConnections(self):
-    self._visibilityButton.toggled.disconnect(self._onVisibilityButtonToggled)
+    self._visibilityButton.toggled.disconnect()
+    self._pickList.currentTextChanged.disconnect()
 
   def _processData(self, caller=None, event=None):
     self._seriesTypeLabel.text = "{}: {}".format(ModuleLogicMixin.getDICOMValue(self._seriesType.getVolume(),
                                                                                 DICOMTAGS.SERIES_NUMBER),
                                                  self._seriesType.getName())
 
-  def onFindingDataChanged(self, caller=None, event=None):
-    """
-    TODO: Note that according to PI-RADS, there is preferred sequence for measuring lesions, depending on the lesion
-    location, but the reader can override the suggested sequence
-    """
+  def _onFindingDataChanged(self, caller=None, event=None):
+    # TODO: Note that according to PI-RADS, there is preferred sequence for measuring lesions, depending on the lesion location, but the reader can override the suggested sequence
+    self._pickList.blockSignals(True)
     self._pickList.clear()
-    self._pickList.addItems(self._finding.getPickList(self._seriesType))
-    self._pickList.visible = self._pickList.count
+    self._pickList.addItems([" "]+ self._finding.getPickList(self._seriesType))
+    self._pickList.visible = self._pickList.count > 1
     self._pickList.setToolTip(self._finding.getPickListTooltip(self._seriesType))
+    score = self._finding.getScore(self._seriesType)
+    if score:
+      index = self._pickList.findText(score)
+      if index != -1:
+        self._pickList.setCurrentIndex(index)
+      else:
+        # remove score if it couldn't be found
+        self._finding.removeScore(self._seriesType)
+    self._pickList.blockSignals(False)
 
   def getSeriesType(self):
     """ This method returns the series type that was assigned to this widget

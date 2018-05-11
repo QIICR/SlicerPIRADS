@@ -181,6 +181,7 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, DICOMQIICRXMixin):
 
 
 class DICOMQIICRXGenerator(DICOMQIICRXMixin):
+  """ DICOMQIICRXGenerator generates a qiicrx DICOM report from an existing studyID """
 
   def __init__(self):
     try:
@@ -191,7 +192,14 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
 
   def generateReport(self, studyID):
-    # TODO: add option to add predecessor
+    """ Generates a qiicrx DICOM report from an existing studyID and adds resulting series to DICOMDatabase
+
+    Args:
+      studyID: studyID of the study that is used as the input for creating a qiicrx DICOM report
+
+    Todo:
+      add option to add predecessor
+    """
     try:
       params = self._generateJSON(studyID)
     except StudyNotEligibleError:
@@ -213,7 +221,7 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
       indexer.addFile(self.db, outputSRPath, "copy")
 
   def _generateJSON(self, studyID):
-    eligibleSeries = self.getEligibleSeriesForStudy(studyID)
+    eligibleSeries = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyID)
 
     if not eligibleSeries:
       raise StudyNotEligibleError

@@ -13,6 +13,7 @@ class Finding(ParameterNodeObservationMixin):
   def __init__(self, name):
     self._name = name
     self._assessmentRule = None
+    self._assessmentScores = dict()
     self._sectors = []
     self._annotations = dict()
 
@@ -78,8 +79,24 @@ class Finding(ParameterNodeObservationMixin):
       return []
     return self._assessmentRule.getPickListTooltip(seriesType)
 
+  def setScore(self, seriesType, score):
+    self._assessmentScores[seriesType] = score
+
+  def getScore(self, seriesType):
+    try:
+      return self._assessmentScores[seriesType]
+    except KeyError:
+      return None
+
+  def removeScore(self, seriesType):
+    try:
+      del self._assessmentScores[seriesType]
+    except KeyError:
+      pass
+
 
 class FindingAssessment(object):
+  # TODO: make use of this class
 
   def __init__(self):
     self._location = None

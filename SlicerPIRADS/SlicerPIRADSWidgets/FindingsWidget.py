@@ -11,6 +11,7 @@ from SlicerDevelopmentToolboxUtils.decorators import onExceptionReturnNone
 
 from SlicerPIRADSLogic.Finding import Finding
 from SlicerPIRADSLogic.SeriesType import SeriesTypeFactory
+from SlicerPIRADSLogic.PIRADSAssessmentCategory import PIRADSAssessmentCategory
 from SlicerPIRADSWidgets.AnnotationWidget import AnnotationWidgetFactory, AnnotationItemWidget
 from SlicerPIRADSWidgets.ProstateSectorMapDialog import ProstateSectorMapDialog
 
@@ -142,32 +143,30 @@ class FindingsListModel(qt.QAbstractListModel):
 
   def __init__(self, parent=None, *args):
     qt.QAbstractListModel.__init__(self, parent, *args)
-    self._findings = list()
+    self._assessmentCategoryCalculator = PIRADSAssessmentCategory()
 
   def getFindings(self):
-    return self._findings
+    return self._assessmentCategoryCalculator.getFindings()
 
   def addFinding(self, finding):
-    self._findings.append(finding)
+    self._assessmentCategoryCalculator.addFinding(finding)
     finding.addEventObserver(finding.DataChangedEvent, lambda caller, event: self._onFindingDataChanged(finding))
     self.dataChanged(self.index(self.rowCount()-1, 0), self.index(self.rowCount()-1, 0))
 
   def removeFinding(self, finding):
-    assert finding in self._findings
-    row = self._findings.index(finding)
-    self._findings.pop(row)
-    self.removeRow(row)
+    index = self._assessmentCategoryCalculator.removeFinding(finding)
+    self.removeRow(index)
 
   def rowCount(self):
-    return len(self._findings)
+    return len(self._assessmentCategoryCalculator)
 
   def data(self, index, role):
     if role != qt.Qt.DisplayRole:
       return None
-    return self._findings[index.row()].getName()
+    return self._assessmentCategoryCalculator.getFindings()[index.row()].getName()
 
   def _onFindingDataChanged(self, finding):
-    row = self._findings.index(finding)
+    row = self._assessmentCategoryCalculator.getFindings().index(finding)
     self.dataChanged(self.index(row, 0), self.index(row, 0))
 
 
@@ -191,9 +190,11 @@ class FindingInformationWidget(qt.QWidget):
     self._finding = finding
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._volumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
+    self._seriesTypes = dict()
     self.setup()
 
   def setFinding(self, finding):
+    # TODO: restore data
     self._finding = finding
     self._fillAnnotationTable()
     self._removeAnnotationToolWidget()
@@ -242,12 +243,12 @@ class FindingInformationWidget(qt.QWidget):
                   slicer.mrmlScene.GetNodeByID(w.mrmlSliceCompositeNode().GetForegroundVolumeID())
         w.enabled = enabled
         w.setStyleSheet("#frame{{border: 5px ridge {};}}".format("green" if enabled else "black"))
-      self.onAnnotationToolSelected(seriesType, button.property("MRML_NODE_CLASS"))
+      self._onAnnotationToolSelected(seriesType, button.property("MRML_NODE_CLASS"))
     else:
       for w in ModuleWidgetMixin.getAllVisibleWidgets():
         w.enabled = True
         w.setStyleSheet("")
-      self.onAnnotationToolDeselected(seriesType, button.property("MRML_NODE_CLASS"))
+      self._onAnnotationToolDeselected(seriesType, button.property("MRML_NODE_CLASS"))
 
   def _onItemSelectionChanged(self):
     currentItem = self._annotationListWidget.currentItem()
@@ -263,18 +264,29 @@ class FindingInformationWidget(qt.QWidget):
   def _fillAnnotationTable(self):
     self._annotationListWidget.clear()
     for volume in self._volumeNodes:
-      seriesType = SeriesTypeFactory.getSeriesType(volume)
+      try:
+        seriesType = self._seriesTypes[volume]
+      except KeyError:
+        seriesType = SeriesTypeFactory.getSeriesType(volume)(volume)
+        self._seriesTypes[volume] = seriesType
       if seriesType:
         listWidgetItem = qt.QListWidgetItem(self._annotationListWidget)
         self._annotationListWidget.addItem(listWidgetItem)
-
-        annotationItemWidget = AnnotationItemWidget(self._finding, seriesType(volume))
+        annotationItemWidget = AnnotationItemWidget(self._finding, seriesType)
+        annotationItemWidget.addEventObserver(annotationItemWidget.ScoreChangedEvent, self._onScoreChanged)
         listWidgetItem.setSizeHint(annotationItemWidget.sizeHint)
         self._annotationListWidget.setItemWidget(listWidgetItem, annotationItemWidget)
       else:
         logging.info("Could not find matching series type for volume %s" % volume.GetName())
 
-  def onAnnotationToolSelected(self, seriesType, mrmlNodeCLass):
+  @vtk.calldata_type(vtk.VTK_STRING)
+  def _onScoreChanged(self, caller, event, callData=None):
+    annotationItemWidget = self._getAnnotationItemWidgetForParameterNode(caller)
+    seriesType = annotationItemWidget.getSeriesType()
+    self._finding.setScore(seriesType, callData)
+    # TODO: make sure that other series from the same type become unavailable
+
+  def _onAnnotationToolSelected(self, seriesType, mrmlNodeCLass):
     self._removeAnnotationToolWidget()
     annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
     try:
@@ -284,7 +296,7 @@ class FindingInformationWidget(qt.QWidget):
       print exc
       pass
 
-  def getAnnotationItemWidgetForParameterNode(self, pNode):
+  def _getAnnotationItemWidgetForParameterNode(self, pNode):
     for idx in range(self._annotationListWidget.count):
       item = self._annotationListWidget.item(idx)
       widget = self._annotationListWidget.itemWidget(item)
@@ -292,7 +304,7 @@ class FindingInformationWidget(qt.QWidget):
         return widget
     return None
 
-  def onAnnotationToolDeselected(self, seriesType, mrmlNodeCLass):
+  def _onAnnotationToolDeselected(self, seriesType, mrmlNodeCLass):
     annotation = self._finding.getOrCreateAnnotation(seriesType, mrmlNodeCLass)
     if not annotation.mrmlNode:
       self._finding.deleteAnnotation(seriesType, mrmlNodeCLass)

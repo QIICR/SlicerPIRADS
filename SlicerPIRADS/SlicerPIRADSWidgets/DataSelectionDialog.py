@@ -80,7 +80,7 @@ class DataSelectionDialog(qt.QDialog):
       self._studiesTableModel.appendRow(sItem)
 
   def _onStudySelected(self, modelIndex):
-    # TODO: cache information of is eligible so that it doesn't need to be recalculated every single time selection changes
+    # TODO: cache information of `is eligible` so that it doesn't need to be recalculated every single time selection changes
     study = self._studiesTableModel.data(modelIndex)
     self._loadButton.enabled = DICOMQIICRXLoaderPluginClass.hasEligibleQIICRXReport(study) or \
                                len(DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(study))
@@ -93,25 +93,37 @@ class DataSelectionDialog(qt.QDialog):
     qiicrxReportSeries = DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(studyId)
 
     if qiicrxReportSeries:
-      logging.info("Found QIICRX report. Loading it.")
-      loader = DICOMQIICRXLoaderPluginClass()
-      loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries))
-      if loadables:
-        loader.load(loadables[0])
-      # TODO: report progress
+      self._loadReport(qiicrxReportSeries)
     else:
-      #TODO Generate report and then load from generated report
-      series = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyId)
-      self._progress.setMaximum(len(series))
-      self._progress.show()
-
-      for idx, s in enumerate(series):
-        files = slicer.dicomDatabase.filesForSeries(s)
-        self._progress.setValue(idx)
-        slicer.app.processEvents()
-        DICOMQIICRXLoaderPluginClass.loadSeries(files)
+      DICOMQIICRXGenerator().generateReport(studyId)
+      self._onLoadButtonClicked()
+      # series = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyId)
+      # self._progress.setMaximum(len(series))
+      # self._progress.show()
+      #
+      # for idx, s in enumerate(series):
+      #   files = slicer.dicomDatabase.filesForSeries(s)
+      #   self._progress.setValue(idx)
+      #   slicer.app.processEvents()
+      #   DICOMQIICRXLoaderPluginClass.loadSeries(files)
 
     self.ui.accept()
+
+  def _loadReport(self, qiicrxReportSeries):
+    """ Load report from existing qiicrx report series
+
+    Args:
+      qiicrxReportSeries: seriesInstanceUID of the qiicrx report series to be loaded
+
+    Todo:
+      report progress
+
+    """
+    logging.info("Found QIICRX report. Loading it.")
+    loader = DICOMQIICRXLoaderPluginClass()
+    loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries))
+    if loadables:
+      loader.load(loadables[0])
 
   def _onBrowseButtonClicked(self):
     path = qt.QFileDialog.getExistingDirectory(self.window(), "Select folder")

@@ -28,19 +28,19 @@ class LesionAssessmentRule(object):
 
   @classmethod
   def getPickListTooltip(cls, seriesType):
-    seriesTypeClass = seriesType.__class__
-    if seriesTypeClass in cls.PREFERRED_SERIES_TYPES_TOOLTIPS.keys():
-      data = cls.PREFERRED_SERIES_TYPES_TOOLTIPS[seriesTypeClass]
-      return HTML_FORMATTED_TOOLTIP.format("\n".join([HTML_FORMATTED_ROW.format(key, value) for key,value in data.items()]))
+    for seriesTypeClass in cls.PREFERRED_SERIES_TYPES_TOOLTIPS.keys():
+      if isinstance(seriesType, seriesTypeClass):
+        data = cls.PREFERRED_SERIES_TYPES_TOOLTIPS[seriesTypeClass]
+        return HTML_FORMATTED_TOOLTIP.format("\n".join([HTML_FORMATTED_ROW.format(key, value) for key,value in data.items()]))
     return ""
 
 
 class TZRule(LesionAssessmentRule):
 
   PATTERN = r'^TZ'
-  PREFERRED_MEASUREMENT_SERIES_TYPES = [T2a, T2c, T2s, DWIb, DWI]
-  PREFERRED_SERIES_TYPES_TOOLTIPS = {T2a: TZ_T2_TOOLTIPS, T2c: TZ_T2_TOOLTIPS, T2s: TZ_T2_TOOLTIPS,
-                                     DWI: TZ_DWI_TOOLTIPS, DWIb: TZ_DWI_TOOLTIPS}
+  PREFERRED_MEASUREMENT_SERIES_TYPES = [T2BasedSeriesType, DiffusionBasedSeriesType]
+  PREFERRED_SERIES_TYPES_TOOLTIPS = {T2BasedSeriesType: TZ_T2_TOOLTIPS,
+                                     DiffusionBasedSeriesType: TZ_DWI_TOOLTIPS}
   @classmethod
   def isApplicable(cls, sectors):
     return any(re.match(cls.PATTERN, s) for s in sectors)
@@ -55,10 +55,10 @@ class TZRule(LesionAssessmentRule):
 class PZRule(LesionAssessmentRule):
 
   PATTERN = r'^PZ'
-  PREFERRED_MEASUREMENT_SERIES_TYPES = [T2a, T2c, T2s, DWIb, DWI, DCE]
-  PREFERRED_SERIES_TYPES_TOOLTIPS = {T2a: PZ_T2_TOOLTIPS, T2c: PZ_T2_TOOLTIPS, T2s: PZ_T2_TOOLTIPS,
-                                     DWI: PZ_DWI_TOOLTIPS, DWIb: PZ_DWI_TOOLTIPS,
-                                     DCE: PZ_DCE_TOOLTIPS}
+  PREFERRED_MEASUREMENT_SERIES_TYPES = [T2BasedSeriesType, DiffusionBasedSeriesType, DCEBasedSeriesType]
+  PREFERRED_SERIES_TYPES_TOOLTIPS = {T2BasedSeriesType: PZ_T2_TOOLTIPS,
+                                     DiffusionBasedSeriesType: PZ_DWI_TOOLTIPS,
+                                     DCEBasedSeriesType: PZ_DCE_TOOLTIPS}
 
   @classmethod
   def isApplicable(cls, sectors):
@@ -67,7 +67,7 @@ class PZRule(LesionAssessmentRule):
   @classmethod
   def getPickList(cls, seriesType):
     if any(isinstance(seriesType, c) for c in cls.PREFERRED_MEASUREMENT_SERIES_TYPES):
-      if isinstance(seriesType, DCE):
+      if isinstance(seriesType, DCEBasedSeriesType):
         return ["+", "-"]
       return [1,2,3,4,5]
     return []
