@@ -11,6 +11,7 @@ set(MODULE_PYTHON_SCRIPTS
   SlicerPIRADSLogic/SeriesType.py
   SlicerPIRADSLogic/LesionAssessmentRules.py
   SlicerPIRADSLogic/Constants.py
+  SlicerPIRADSLogic/PIRADSAssessmentCategory.py
   SlicerPIRADSWidgets/__init__.py
   SlicerPIRADSWidgets/AnnotationWidget.py
   SlicerPIRADSWidgets/FindingsWidget.py
