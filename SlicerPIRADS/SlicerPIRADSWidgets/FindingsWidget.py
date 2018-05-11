@@ -273,18 +273,10 @@ class FindingInformationWidget(qt.QWidget):
         listWidgetItem = qt.QListWidgetItem(self._annotationListWidget)
         self._annotationListWidget.addItem(listWidgetItem)
         annotationItemWidget = AnnotationItemWidget(self._finding, seriesType)
-        annotationItemWidget.addEventObserver(annotationItemWidget.ScoreChangedEvent, self._onScoreChanged)
         listWidgetItem.setSizeHint(annotationItemWidget.sizeHint)
         self._annotationListWidget.setItemWidget(listWidgetItem, annotationItemWidget)
       else:
         logging.info("Could not find matching series type for volume %s" % volume.GetName())
-
-  @vtk.calldata_type(vtk.VTK_STRING)
-  def _onScoreChanged(self, caller, event, callData=None):
-    annotationItemWidget = self._getAnnotationItemWidgetForParameterNode(caller)
-    seriesType = annotationItemWidget.getSeriesType()
-    self._finding.setScore(seriesType, callData)
-    # TODO: make sure that other series from the same type become unavailable
 
   def _onAnnotationToolSelected(self, seriesType, mrmlNodeCLass):
     self._removeAnnotationToolWidget()

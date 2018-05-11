@@ -9,6 +9,8 @@ class Finding(ParameterNodeObservationMixin):
 
   DataChangedEvent = vtk.vtkCommand.UserEvent + 201
   RuleChangedEvent = vtk.vtkCommand.UserEvent + 202
+  SectorSelectionChangedEvent = vtk.vtkCommand.UserEvent + 203
+  AssessmentScoreChanged = vtk.vtkCommand.UserEvent + 204
 
   def __init__(self, name):
     self._name = name
@@ -55,7 +57,7 @@ class Finding(ParameterNodeObservationMixin):
   def setSectors(self, sectors):
     self._sectors = sectors
     self._assessmentRule = LesionAssessmentRuleFactory.getEligibleLesionAssessmentRule(sectors)
-    self.invokeEvent(self.DataChangedEvent)
+    self.invokeEvent(self.SectorSelectionChangedEvent)
 
   def setAllVisible(self, visible):
     for seriesType in self._annotations.keys():
@@ -81,6 +83,7 @@ class Finding(ParameterNodeObservationMixin):
 
   def setScore(self, seriesType, score):
     self._assessmentScores[seriesType] = score
+    self.invokeEvent(self.AssessmentScoreChanged)
 
   def getScore(self, seriesType):
     try:
@@ -93,7 +96,10 @@ class Finding(ParameterNodeObservationMixin):
       del self._assessmentScores[seriesType]
     except KeyError:
       pass
+    self.invokeEvent(self.AssessmentScoreChanged)
 
+  def getAssessmentScores(self):
+    return self._assessmentScores
 
 class FindingAssessment(object):
   # TODO: make use of this class

@@ -23,14 +23,13 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
       parent(qt.QWidget, optional): parent widget
   """
 
-  ScoreChangedEvent = vtk.vtkCommand.UserEvent + 203
-
   def __init__(self, finding, seriesType, parent=None):
     qt.QWidget.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._seriesType = seriesType
     self._finding = finding
-    self._finding.addEventObserver(finding.DataChangedEvent, self._onFindingDataChanged)
+    self._finding.addEventObserver(finding.SectorSelectionChangedEvent, self._onFindingSectorSelectionChanged)
+    self._finding.addEventObserver(finding.AssessmentScoreChanged, self._onFindingAssessmentScoreChanged)
     self.setup()
     self._processData()
 
@@ -40,7 +39,7 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
     self.ui = slicer.util.loadUI(path)
     self._visibilityButton = self.ui.findChild(qt.QPushButton, "visibilityButton")
     self._pickList = self.ui.findChild(qt.QComboBox, "picklist")
-    self._onFindingDataChanged()
+    self._onFindingSectorSelectionChanged()
     self._visibilityButton.setIcon(Icons.visible_on)
     self._visibilityButton.checkable = True
     self._visibilityButton.checked = True
@@ -50,28 +49,30 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
 
   def _setupConnections(self):
     self._visibilityButton.toggled.connect(self._onVisibilityButtonToggled)
-    self._pickList.currentTextChanged.connect(lambda text: self.invokeEvent(self.ScoreChangedEvent, text))
+    self._pickList.currentTextChanged.connect(self._onScoreSelectionChanged)
     self.destroyed.connect(self._cleanupConnections)
 
   def _onVisibilityButtonToggled(self, checked):
     self._visibilityButton.setIcon(Icons.visible_on if checked else Icons.visible_off)
     self._finding.setSeriesTypeVisible(self._seriesType, checked)
 
-  def _cleanupConnections(self):
+  def _cleanupConnections(self, obj):
     self._visibilityButton.toggled.disconnect()
     self._pickList.currentTextChanged.disconnect()
+    self._finding.removeEventObserver(self._finding.SectorSelectionChangedEvent, self._onFindingSectorSelectionChanged)
+    self._finding.removeEventObserver(self._finding.AssessmentScoreChanged, self._onFindingAssessmentScoreChanged)
 
   def _processData(self, caller=None, event=None):
     self._seriesTypeLabel.text = "{}: {}".format(ModuleLogicMixin.getDICOMValue(self._seriesType.getVolume(),
                                                                                 DICOMTAGS.SERIES_NUMBER),
                                                  self._seriesType.getName())
 
-  def _onFindingDataChanged(self, caller=None, event=None):
-    # TODO: Note that according to PI-RADS, there is preferred sequence for measuring lesions, depending on the lesion location, but the reader can override the suggested sequence
+  def _onFindingSectorSelectionChanged(self, caller=None, event=None):
+    # TODO: Note that according to PI-RADS, there is preferred sequence for measuring lesions, depending on the lesion
+    # location, but the reader can override the suggested sequence
     self._pickList.blockSignals(True)
     self._pickList.clear()
     self._pickList.addItems([" "]+ self._finding.getPickList(self._seriesType))
-    self._pickList.visible = self._pickList.count > 1
     self._pickList.setToolTip(self._finding.getPickListTooltip(self._seriesType))
     score = self._finding.getScore(self._seriesType)
     if score:
@@ -81,7 +82,26 @@ class AnnotationItemWidget(qt.QWidget, ParameterNodeObservationMixin):
       else:
         # remove score if it couldn't be found
         self._finding.removeScore(self._seriesType)
+    self._onFindingAssessmentScoreChanged()
     self._pickList.blockSignals(False)
+
+  def _onScoreSelectionChanged(self, score):
+    if score == " ":
+      self._finding.removeScore(self._seriesType)
+    else:
+      self._finding.setScore(self._seriesType, score)
+
+  def _onFindingAssessmentScoreChanged(self, caller=None, event=None):
+    assessedSeriesTypes = self._finding.getAssessmentScores().keys()
+    enabled = self._pickList.count > 1
+    if enabled and self._seriesType in assessedSeriesTypes:
+      enabled = True
+    elif any(isinstance(self._seriesType, a.__class__.__bases__[0]) for a in assessedSeriesTypes):
+      enabled = False
+    self.enableScoring(enabled)
+
+  def enableScoring(self, enable):
+    self._pickList.visible = enable
 
   def getSeriesType(self):
     """ This method returns the series type that was assigned to this widget
