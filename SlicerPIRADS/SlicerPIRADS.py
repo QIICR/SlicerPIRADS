@@ -268,8 +268,8 @@ class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
     ScriptedLoadableModuleLogic.__init__(self)
 
-  @staticmethod
-  def viewerPerVolume(volumeNodes, layout, background, opacity=1.0):
+  @classmethod
+  def viewerPerVolume(cls, volumeNodes, layout, background, opacity=1.0):
     """ Load each volume in the scene into its own slice viewer and link them all together.
     If background is specified, put it in the background of all viewers and make the other volumes be the foreground.
     If label is specified, make it active as the label layer of all viewers. Return a map of slice nodes indexed by
@@ -296,8 +296,21 @@ class SlicerPIRADSModuleLogic(ScriptedLoadableModuleLogic):
       compositeNode.SetForegroundOpacity(opacity)
 
       sliceNode = sliceWidget.mrmlSliceNode()
+      orientation = cls.getOrientation(volume)
+      if orientation:
+        sliceNode.SetOrientation(orientation)
       sliceNode.RotateToVolumePlane(volume)
       sliceWidget.fitSliceToBackground()
+
+  @classmethod
+  def getOrientation(cls, volumeNode):
+    name = volumeNode.GetName().lower()
+    orientation = 'Axial'
+    if 'sag' in name:
+      orientation = 'Sagittal'
+    elif 'cor' in name:
+      orientation = 'Coronal'
+    return orientation
 
 
 class SlicerPIRADSSlicelet(qt.QWidget):

@@ -14,6 +14,7 @@ from SlicerPIRADSLogic.SeriesType import *
 from SlicerPIRADSLogic.Exception import StudyNotEligibleError
 
 from SlicerDevelopmentToolboxUtils.mixins import ModuleLogicMixin
+from SlicerDevelopmentToolboxUtils.decorators import multimethod
 
 
 class DICOMQIICRXMixin(ModuleLogicMixin):
@@ -73,14 +74,19 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, DICOMQIICRXMixin):
       return DICOMQIICRXLoaderPluginClass.isQIICRX(dicom.read_file(fileName))
     return False
 
-  @classmethod
-  def getQIICRXReportSeries(cls, study):
-    db = slicer.dicomDatabase
-    series = db.seriesForStudy(study)
+  @staticmethod
+  @multimethod([str, unicode])
+  def getQIICRXReportSeries(study):
+    return DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(slicer.dicomDatabase.seriesForStudy(study))
+
+  @staticmethod
+  @multimethod([tuple, list])
+  def getQIICRXReportSeries(series):
+    eligible = []
     for currentSeries in series:
-      if cls.isDicomTIDQIICRX(db.filesForSeries(currentSeries)[0]):
-        return currentSeries
-    return None
+      if DICOMQIICRXLoaderPluginClass.isDicomTIDQIICRX(slicer.dicomDatabase.filesForSeries(currentSeries)[0]):
+        eligible.append(currentSeries)
+    return eligible
 
   def __init__(self):
     try:
@@ -191,19 +197,28 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
     self.tempDir = os.path.join(slicer.app.temporaryPath, "QIICRX", self.currentDateTime)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
 
-  def generateReport(self, studyID):
+  def generateReport(self, obj):
     """ Generates a qiicrx DICOM report from an existing studyID and adds resulting series to DICOMDatabase
 
     Args:
-      studyID: studyID of the study that is used as the input for creating a qiicrx DICOM report
+      obj: studyID or list of series UIDs that is used as the input for creating a qiicrx DICOM report
 
     Todo:
       add option to add predecessor
     """
+    if type(obj) in [str, unicode]:
+      seriesUIDs = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(obj)
+      if not seriesUIDs:
+        raise StudyNotEligibleError
+    elif type(obj) in [tuple, list]:
+      seriesUIDs = obj
+    else:
+      raise ValueError("Value of type %s is not supported" % type(obj))
+
     try:
-      params = self._generateJSON(studyID)
+      params = self._generateJSON(seriesUIDs)
     except StudyNotEligibleError:
-      logging.error("Study with id '%s' is not eligible for PIRADS reading" % studyID)
+      logging.error("Series '%s' is not eligible for PIRADS reading" % seriesUIDs)
       return
 
     outputSRPath = os.path.join(self.tempDir, "sr.dcm")
@@ -220,12 +235,7 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
       indexer = ctk.ctkDICOMIndexer()
       indexer.addFile(self.db, outputSRPath, "copy")
 
-  def _generateJSON(self, studyID):
-    eligibleSeries = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyID)
-
-    if not eligibleSeries:
-      raise StudyNotEligibleError
-
+  def _generateJSON(self, seriesUIDs):
     data = self._getGeneralMetaInformation()
     data['imageLibrary'] = []
 
@@ -233,14 +243,17 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
       "metaDataFileName": os.path.join(self.tempDir, "meta.json")
     }
     acqTypes = self._getAcquisitionTypes()
-    data["compositeContext"], params["compositeContextDataDir"] = self._populateCompositeContext(eligibleSeries)
+    data["compositeContext"], params["compositeContextDataDir"] = self._populateCompositeContext(seriesUIDs)
 
-    seriesDirs = set(os.path.dirname(os.path.abspath(self.db.filesForSeries(series)[0])) for series in eligibleSeries)
-    for series in eligibleSeries:
+    seriesDirs = set(os.path.dirname(os.path.abspath(self.db.filesForSeries(series)[0])) for series in seriesUIDs)
+    for series in seriesUIDs:
       try:
         data['imageLibrary'].append(self._createImageLibraryEntry(series, acqTypes, len(seriesDirs) > 1))
       except ValueError as exc:
-        print exc.message
+        print exc
+
+    if not data['imageLibrary']:
+      raise ValueError("No eligible series has been found for PIRADS reading!")
 
     params["imageLibraryDataDir"] = os.path.commonprefix(seriesDirs)
 

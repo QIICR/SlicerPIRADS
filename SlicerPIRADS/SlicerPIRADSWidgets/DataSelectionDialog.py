@@ -1,3 +1,5 @@
+
+
 import qt
 import os
 import slicer
@@ -6,10 +8,13 @@ from DICOMQIICRXLoaderPlugin import *
 
 
 class DataSelectionDialog(qt.QDialog):
+  """ TODO: generalize more and move to SDT """
 
   def __init__(self, parent=None):
     qt.QDialog.__init__(self, parent)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
+    self.db = slicer.dicomDatabase
+    self.modal = True
     self.setup()
 
   def setup(self):
@@ -17,10 +22,15 @@ class DataSelectionDialog(qt.QDialog):
     self.ui = slicer.util.loadUI(path)
     self._browseButton = self.ui.findChild(qt.QPushButton, "browseButton")
     self._loadButton = self.ui.findChild(qt.QPushButton, "loadButton")
+    self._selectAllButton = self.ui.findChild(qt.QPushButton, "selectAllButton")
+    self._selectAllButton.enabled = False
+    self._deselectAllButton = self.ui.findChild(qt.QPushButton, "deselectAllButton")
+    self._deselectAllButton.enabled = False
     self._progress = self.ui.findChild(qt.QProgressBar, "progressBar")
     self._progress.hide()
     self._configurePatientTable()
     self._configureStudiesTable()
+    self._configureSeriesTable()
     self._configureCommonTableSettings()
     self._setupConnections()
 
@@ -32,18 +42,34 @@ class DataSelectionDialog(qt.QDialog):
     self._patientTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
 
   def _configureStudiesTable(self):
-    self._studiesLabel = self.ui.findChild(qt.QLabel, "studiesLabel")
     self._studiesTable = self.ui.findChild(qt.QTableView, "studiesTableView")
     self._studiesTableModel = qt.QStandardItemModel()
+    self._studiesTableModel.setHorizontalHeaderLabels(["Study Instance UID", "Date"])
     self._studiesTable.setModel(self._studiesTableModel)
     self._studiesTable.setEditTriggers(qt.QAbstractItemView.NoEditTriggers)
-    self._studiesTable.horizontalHeader().hide()
+    self._studiesTable.horizontalHeader().setSectionResizeMode(0, qt.QHeaderView.Stretch)
+    self._studiesTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+
+  def _configureSeriesTable(self):
+    self._seriesTable = self.ui.findChild(qt.QTableView, "seriesTableView")
+    self._seriesTableModel = qt.QStandardItemModel()
+    self._seriesTableModel.setHorizontalHeaderLabels(["UID", "Series Number", "Series Date", "Modality", "Series Description"])
+    self._seriesTable.setModel(self._seriesTableModel)
+    self._seriesTable.setEditTriggers(qt.QAbstractItemView.NoEditTriggers)
+    self._seriesTable.setColumnHidden(0, True)
+    # self._seriesTable.horizontalHeader().setSectionResizeMode(0, qt.QHeaderView.Stretch)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(2, qt.QHeaderView.ResizeToContents)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(3, qt.QHeaderView.ResizeToContents)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(4, qt.QHeaderView.Stretch)
+    self._seriesTable.setSelectionBehavior(qt.QTableView.SelectRows)
+    self._seriesTable.verticalHeader().hide()
 
   def _configureCommonTableSettings(self):
     for table in [self._studiesTable, self._patientTable]:
       table.setSelectionBehavior(qt.QTableView.SelectRows)
       table.setSelectionMode(qt.QTableView.SingleSelection)
-      table.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Stretch)
+      # table.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Stretch)
       table.verticalHeader().hide()
 
   def _setupConnections(self):
@@ -52,9 +78,10 @@ class DataSelectionDialog(qt.QDialog):
       getattr(self._loadButton.clicked, funcName)(self._onLoadButtonClicked)
       getattr(self._patientTable.selectionModel(), funcName)('currentChanged(QModelIndex, QModelIndex)',
                                                              self._onPatientSelected)
-      getattr(self._studiesTable.selectionModel(), funcName)('currentChanged(QModelIndex, QModelIndex)',
-                                                             self._onStudySelected)
-
+      getattr(self._studiesTable.selectionModel().selectionChanged, funcName)(self._onStudySelectionChanged)
+      getattr(self._seriesTable.selectionModel().selectionChanged, funcName)(self._onSeriesSelectionChanged)
+      getattr(self._selectAllButton.clicked, funcName)(lambda: self._selectAllSeries(True))
+      getattr(self._deselectAllButton.clicked, funcName)(lambda: self._selectAllSeries(False))
     setupConnections()
     slicer.app.connect('aboutToQuit()', self.deleteLater)
     self.destroyed.connect(lambda : setupConnections(funcName="disconnect"))
@@ -69,34 +96,78 @@ class DataSelectionDialog(qt.QDialog):
 
   def _autoSelectFirstStudy(self):
     modelIndex = self._studiesTableModel.index(0, 0)
-    self._studiesTable.selectionModel().select(modelIndex, self._studiesTable.selectionModel().Select)
-    self._studiesTable.selectionModel().setCurrentIndex(modelIndex, self._studiesTable.selectionModel().Select)
+    self._studiesTable.selectionModel().select(modelIndex, qt.QItemSelectionModel.Select | qt.QItemSelectionModel.Rows)
 
   def _fillStudiesList(self, pid):
-    self._studiesTableModel.clear()
+    self._studiesTableModel.removeRows(0, self._studiesTableModel.rowCount())
     studies = self._patientTableModel.getStudiesForPatient(pid)
     for study in studies:
-      sItem = qt.QStandardItem(study)
-      self._studiesTableModel.appendRow(sItem)
+      series = self.db.seriesForStudy(study)
+      self._studiesTableModel.appendRow([qt.QStandardItem(study),
+                                         qt.QStandardItem(self.db.fileValue(self.db.filesForSeries(series[0])[0],
+                                                                            "0008,0020") if len(series) else "")])
+    self._studiesTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
 
-  def _onStudySelected(self, modelIndex):
+  def _fillSeriesList(self, studyID):
+    # TODO: add smart logic for row selection SR selection only one! if SR selected, don't allow selection of other series
+    self._clearSeriesList()
+    series = sorted(self.db.seriesForStudy(studyID), key=lambda a: int(self.db.fileValue(self.db.filesForSeries(a)[0],
+                                                                                '0020,0011')))
+    for rowIdx, s in enumerate(series):
+      info = [qt.QStandardItem(s)]
+      for tag in ['0020,0011', '0008,0023', '0008,0060', '0008,103E']:
+        item = qt.QStandardItem(self.db.fileValue(self.db.filesForSeries(s)[0], tag))
+        info.append(item)
+      self._seriesTableModel.appendRow(info)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+    self._seriesTable.horizontalHeader().setSectionResizeMode(3, qt.QHeaderView.ResizeToContents)
+    self._selectAllButton.enabled = self._seriesTableModel.rowCount() > 0
+    self._deselectAllButton.enabled = self._seriesTableModel.rowCount() > 0
+
+  def _clearSeriesList(self):
+    self._seriesTableModel.removeRows(0, self._seriesTableModel.rowCount())
+
+  def _selectAllSeries(self, selected):
+    if selected:
+      m = self._seriesTableModel
+      itemSelection = \
+        qt.QItemSelection(m.index(0, 0), m.index(m.rowCount()-1, m.columnCount()-1))
+      self._seriesTable.selectionModel().select(itemSelection, qt.QItemSelectionModel.Select | qt.QItemSelectionModel.Rows)
+    else:
+      self._seriesTable.selectionModel().clearSelection()
+
+  def _onStudySelectionChanged(self, current, previous):
     # TODO: cache information of `is eligible` so that it doesn't need to be recalculated every single time selection changes
-    study = self._studiesTableModel.data(modelIndex)
-    self._loadButton.enabled = DICOMQIICRXLoaderPluginClass.hasEligibleQIICRXReport(study) or \
-                               len(DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(study))
+    if current.indexes():
+      study = self._studiesTableModel.data(current.indexes()[0])
+      # self._loadButton.enabled = DICOMQIICRXLoaderPluginClass.hasEligibleQIICRXReport(study) or \
+      #                            len(DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(study))
+      self._fillSeriesList(study)
+      # TODO: preselect eligible series... and if there is an eligible SR the most recent one!
+
+  def _onSeriesSelectionChanged(self, selected, deselected):
+    # TODO: series selection and SR selection should not be possible at the same time
+    indexes = self._seriesTable.selectionModel().selectedIndexes
+    selectedRows = set([index.row() for index in indexes])
+    self._loadButton.enabled = len(selectedRows)
 
   def _onLoadButtonClicked(self):
-    modelIndex = self._studiesTable.selectionModel().currentIndex
-    studyId = self._studiesTableModel.data(modelIndex)
+    indexes = self._seriesTable.selectionModel().selectedIndexes
+    m = self._seriesTableModel
+    uids = [m.data(m.index(row, 0)) for row in set([index.row() for index in indexes])]
 
     # TODO: right now only expecting one report to be in the study
-    qiicrxReportSeries = DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(studyId)
+    qiicrxReportSeries = DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(uids)
+    # TODO: if list of eligible SRs is longer, get the most recent one!
 
     if qiicrxReportSeries:
       self._loadReport(qiicrxReportSeries)
+      self.ui.accept()
     else:
-      DICOMQIICRXGenerator().generateReport(studyId)
-      self._onLoadButtonClicked()
+      DICOMQIICRXGenerator().generateReport(uids)
+      study = self._studiesTableModel.data(self._studiesTable.selectionModel().selectedIndexes[0])
+      self._fillSeriesList(study)
+
       # series = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(studyId)
       # self._progress.setMaximum(len(series))
       # self._progress.show()
@@ -106,8 +177,6 @@ class DataSelectionDialog(qt.QDialog):
       #   self._progress.setValue(idx)
       #   slicer.app.processEvents()
       #   DICOMQIICRXLoaderPluginClass.loadSeries(files)
-
-    self.ui.accept()
 
   def _loadReport(self, qiicrxReportSeries):
     """ Load report from existing qiicrx report series
@@ -119,9 +188,15 @@ class DataSelectionDialog(qt.QDialog):
       report progress
 
     """
-    logging.info("Found QIICRX report. Loading it.")
+    qiicrxReportSeries = sorted(qiicrxReportSeries,
+                                key=lambda s: int(self.db.fileValue(self.db.filesForSeries(s)[0], '0008,0021'))+
+                                              int(self.db.fileValue(self.db.filesForSeries(s)[0], '0008,0031')),
+                                reverse=True)
+    if len(qiicrxReportSeries) > 1:
+      logging.info("Found multiple QIICRX reports: loading latest one.")
+
     loader = DICOMQIICRXLoaderPluginClass()
-    loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries))
+    loadables = loader.examineFiles(slicer.dicomDatabase.filesForSeries(qiicrxReportSeries[0]))
     if loadables:
       loader.load(loadables[0])
 
@@ -177,10 +252,10 @@ class PatientsTableModel(qt.QAbstractTableModel):
     return self.db.patients()
 
   def _getPatientName(self, pid):
-    return slicer.dicomDatabase.fileValue(self._getDataset(pid), "0010,0010")
+    return self.db.fileValue(self._getDataset(pid), "0010,0010")
 
   def _getPatientBirthDate(self, pid):
-    return slicer.dicomDatabase.fileValue(self._getDataset(pid), "0010,0030")
+    return self.db.fileValue(self._getDataset(pid), "0010,0030")
 
   def _getDataset(self, pid):
     try:
