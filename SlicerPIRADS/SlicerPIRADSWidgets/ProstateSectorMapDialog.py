@@ -15,7 +15,7 @@ class ProstateSectorMapDialog(object):
     self._sectorButtonGroup = self.ui.findChild(qt.QButtonGroup, "sectorButtonGroup")
     self._dialogButtonBox = self.ui.findChild(qt.QDialogButtonBox, "dialogButtonBox")
     icon = qt.QIcon(os.path.join(self.modulePath, 'Resources', 'Images', 'prostate_sector_map.png'))
-    self._backgroundLabel.setPixmap(icon.pixmap(qt.QSize(622, 850)))
+    self._backgroundLabel.setPixmap(icon.pixmap(qt.QSize(500, 683)))
     self._setupConnections()
 
   def exec_(self):

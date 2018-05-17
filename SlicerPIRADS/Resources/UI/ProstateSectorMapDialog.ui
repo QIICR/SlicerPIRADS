@@ -6,9 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>623</width>
-    <height>881</height>
+    <width>502</width>
+    <height>709</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>502</width>
+    <height>709</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>502</width>
+    <height>709</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -16,8 +34,8 @@
   <widget class="QDialogButtonBox" name="dialogButtonBox">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>850</y>
+     <x>250</x>
+     <y>680</y>
      <width>251</width>
      <height>32</height>
     </rect>
@@ -29,633 +47,20 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::Reset</set>
    </property>
   </widget>
-  <widget class="QCheckBox" name="TZa_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>180</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZa_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>410</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Mid_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZp_Apex_R">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>640</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Apex_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZa_Apex_L">
-   <property name="geometry">
-    <rect>
-     <x>490</x>
-     <y>620</y>
-     <width>21</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Apex_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Apex_R">
-   <property name="geometry">
-    <rect>
-     <x>410</x>
-     <y>670</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Apex_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZp_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>440</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Mid_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>560</x>
-     <y>450</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Mid_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpm_Apex_R">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>680</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpm_Apex_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="Seminal_Vesicle_R">
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>40</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>Seminal_Vesicle_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZp_Mid_R">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
-     <y>440</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Mid_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZp_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>220</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="AS_Apex_R">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>590</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>AS_Apex_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZa_Apex_R">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>620</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Apex_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZa_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>560</x>
-     <y>410</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZa_Mid_L</string>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZa_Base_R">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
-     <y>180</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Base_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="CZ_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>250</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>CZ_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZa_Mid_R">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
-     <y>410</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZa_Mid_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="AS_Base_R">
-   <property name="geometry">
-    <rect>
-     <x>450</x>
-     <y>140</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>AS_Base_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>570</x>
-     <y>240</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="TZp_Apex_L">
-   <property name="geometry">
-    <rect>
-     <x>490</x>
-     <y>640</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Apex_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Apex_L">
-   <property name="geometry">
-    <rect>
-     <x>530</x>
-     <y>670</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Apex_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="AS_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>480</x>
-     <y>360</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>AS_Mid_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Mid_R">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>450</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Mid_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZa_Base_R">
-   <property name="geometry">
-    <rect>
-     <x>360</x>
-     <y>200</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZa_Base_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="Urethra_Urethra_LR">
-   <property name="geometry">
-    <rect>
-     <x>470</x>
-     <y>780</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>Urethra_Urethra_LR</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="AS_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>490</x>
-     <y>140</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>AS_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpl_Base_R">
-   <property name="geometry">
-    <rect>
-     <x>370</x>
-     <y>240</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpl_Base_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZa_Mid_R">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>410</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZa_Mid_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
   <widget class="QLabel" name="prostateSectorMap">
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>-10</y>
-     <width>623</width>
-     <height>875</height>
+     <y>0</y>
+     <width>501</width>
+     <height>681</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string/>
@@ -664,76 +69,10 @@
     <pixmap>../Images/prostate_sector_map.png</pixmap>
    </property>
   </widget>
-  <widget class="QCheckBox" name="AS_Apex_L">
+  <widget class="QCheckBox" name="PZa_Apex_L">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>590</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>AS_Apex_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZa_Base_L">
-   <property name="geometry">
-    <rect>
-     <x>580</x>
-     <y>200</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZa_Base_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpm_Apex_L">
-   <property name="geometry">
-    <rect>
-     <x>490</x>
-     <y>680</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>PZpm_Apex_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpm_Mid_R">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
+     <x>420</x>
      <y>490</y>
      <width>21</width>
      <height>20</height>
@@ -743,7 +82,7 @@
     <cursorShape>ArrowCursor</cursorShape>
    </property>
    <property name="toolTip">
-    <string>PZpm_Mid_R</string>
+    <string>PZa_Apex_L</string>
    </property>
    <property name="text">
     <string/>
@@ -752,54 +91,10 @@
     <string notr="true">sectorButtonGroup</string>
    </attribute>
   </widget>
-  <widget class="QCheckBox" name="TZp_Base_R">
+  <widget class="QCheckBox" name="PZa_Apex_R">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>220</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>TZp_Base_R</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="Seminal_Vesicle_L">
-   <property name="geometry">
-    <rect>
-     <x>550</x>
-     <y>40</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>Seminal_Vesicle_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="PZpm_Mid_L">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
+     <x>331</x>
      <y>490</y>
      <width>21</width>
      <height>20</height>
@@ -809,29 +104,7 @@
     <cursorShape>ArrowCursor</cursorShape>
    </property>
    <property name="toolTip">
-    <string>PZpm_Mid_L</string>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <attribute name="buttonGroup">
-    <string notr="true">sectorButtonGroup</string>
-   </attribute>
-  </widget>
-  <widget class="QCheckBox" name="CZ_Base_R">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
-     <y>250</y>
-     <width>21</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>ArrowCursor</cursorShape>
-   </property>
-   <property name="toolTip">
-    <string>CZ_Base_R</string>
+    <string>PZa_Apex_R</string>
    </property>
    <property name="text">
     <string/>
@@ -843,8 +116,8 @@
   <widget class="QCheckBox" name="AS_Mid_R">
    <property name="geometry">
     <rect>
-     <x>460</x>
-     <y>360</y>
+     <x>360</x>
+     <y>290</y>
      <width>21</width>
      <height>20</height>
     </rect>
@@ -865,11 +138,11 @@
     <string notr="true">sectorButtonGroup</string>
    </attribute>
   </widget>
-  <widget class="QCheckBox" name="PZa_Apex_R">
+  <widget class="QCheckBox" name="CZ_Base_R">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>620</y>
+     <x>340</x>
+     <y>200</y>
      <width>21</width>
      <height>20</height>
     </rect>
@@ -878,7 +151,7 @@
     <cursorShape>ArrowCursor</cursorShape>
    </property>
    <property name="toolTip">
-    <string>PZa_Apex_R</string>
+    <string>CZ_Base_R</string>
    </property>
    <property name="text">
     <string/>
@@ -887,11 +160,11 @@
     <string notr="true">sectorButtonGroup</string>
    </attribute>
   </widget>
-  <widget class="QCheckBox" name="PZa_Apex_L">
+  <widget class="QCheckBox" name="PZpm_Mid_L">
    <property name="geometry">
     <rect>
-     <x>530</x>
-     <y>620</y>
+     <x>400</x>
+     <y>390</y>
      <width>21</width>
      <height>20</height>
     </rect>
@@ -900,7 +173,764 @@
     <cursorShape>ArrowCursor</cursorShape>
    </property>
    <property name="toolTip">
-    <string>PZa_Apex_L</string>
+    <string>PZpm_Mid_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="Seminal_Vesicle_L">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>20</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>Seminal_Vesicle_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Base_R">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>174</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Base_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpm_Mid_R">
+   <property name="geometry">
+    <rect>
+     <x>351</x>
+     <y>390</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpm_Mid_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpm_Apex_L">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>540</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpm_Apex_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZa_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>460</x>
+     <y>156</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZa_Base_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="AS_Apex_L">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>470</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>AS_Apex_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZa_Mid_R">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>320</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZa_Mid_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Base_R">
+   <property name="geometry">
+    <rect>
+     <x>294</x>
+     <y>200</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Base_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="AS_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>400</x>
+     <y>110</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>AS_Base_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="Urethra_Urethra_LR">
+   <property name="geometry">
+    <rect>
+     <x>377</x>
+     <y>621</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>Urethra_Urethra_LR</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZa_Base_R">
+   <property name="geometry">
+    <rect>
+     <x>292</x>
+     <y>156</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZa_Base_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Mid_R">
+   <property name="geometry">
+    <rect>
+     <x>308</x>
+     <y>370</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Mid_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="AS_Mid_L">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>290</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>AS_Mid_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Apex_L">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>530</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Apex_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Apex_L">
+   <property name="geometry">
+    <rect>
+     <x>392</x>
+     <y>510</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Apex_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>457</x>
+     <y>200</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Base_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="AS_Base_R">
+   <property name="geometry">
+    <rect>
+     <x>352</x>
+     <y>110</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>AS_Base_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Mid_R">
+   <property name="geometry">
+    <rect>
+     <x>346</x>
+     <y>320</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Mid_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="CZ_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>200</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>CZ_Base_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Base_R">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>140</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Base_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZa_Mid_L">
+   <property name="geometry">
+    <rect>
+     <x>442</x>
+     <y>320</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZa_Mid_L</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Apex_R">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>490</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Apex_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="AS_Apex_R">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>470</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>AS_Apex_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>400</x>
+     <y>174</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Base_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Mid_R">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>350</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Mid_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="Seminal_Vesicle_R">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>20</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>Seminal_Vesicle_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpm_Apex_R">
+   <property name="geometry">
+    <rect>
+     <x>362</x>
+     <y>540</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpm_Apex_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Mid_L">
+   <property name="geometry">
+    <rect>
+     <x>444</x>
+     <y>370</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Mid_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Mid_L">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>350</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Mid_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="PZpl_Apex_R">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>530</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>PZpl_Apex_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Apex_L">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>492</y>
+     <width>21</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Apex_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZp_Apex_R">
+   <property name="geometry">
+    <rect>
+     <x>358</x>
+     <y>510</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZp_Apex_R</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Mid_L">
+   <property name="geometry">
+    <rect>
+     <x>406</x>
+     <y>320</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Mid_L</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">sectorButtonGroup</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="TZa_Base_L">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>140</y>
+     <width>21</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>ArrowCursor</cursorShape>
+   </property>
+   <property name="toolTip">
+    <string>TZa_Base_L</string>
    </property>
    <property name="text">
     <string/>
