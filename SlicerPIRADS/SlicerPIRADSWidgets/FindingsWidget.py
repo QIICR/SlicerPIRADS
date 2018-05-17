@@ -68,7 +68,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
   def _onProstateMapButtonClicked(self):
     row = self._findingsListView.currentIndex().row()
     if -1 < row < self._findingsListModel.rowCount():
-      finding = self._findingsListModel.getFindings()[row]
+      finding = self._findingsListModel.findings[row]
 
       if not self._prostateMapDialog:
         self._prostateMapDialog = ProstateSectorMapDialog()
@@ -90,7 +90,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
   def _onRemoveFindingRequested(self):
     currentIndex = self._findingsListView.currentIndex()
-    finding = self._findingsListModel.getFindings()[currentIndex.row()]
+    finding = self._findingsListModel.findings[currentIndex.row()]
     if slicer.util.confirmYesNoDisplay("Finding '{}' is about to be deleted. "
                                        "Do you want to proceed?".format(finding.getName())):
       self._findingsListModel.removeFinding(finding)
@@ -112,7 +112,7 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
     row = current.row()
     if row >= 0:
-      finding =  self._findingsListModel.getFindings()[row]
+      finding =  self._findingsListModel.findings[row]
       # TODO: jump to centroid of lesion
       self._displayFindingInformationWidget(finding)
 
@@ -138,15 +138,22 @@ class FindingsWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
     self._addFindingsButton.setEnabled(self._findingsListModel.rowCount() < self._maximumFindingCount)
     self._prostateMapButton.setEnabled(-1 < self._findingsListView.currentIndex().row() < self._findingsListModel.rowCount())
 
+  def getAssessmentCalculator(self):
+    return self._findingsListModel.getAssessmentCalculator()
+
 
 class FindingsListModel(qt.QAbstractListModel):
+
+  @property
+  def findings(self):
+    return self._assessmentCategoryCalculator.getFindings()
 
   def __init__(self, parent=None, *args):
     qt.QAbstractListModel.__init__(self, parent, *args)
     self._assessmentCategoryCalculator = PIRADSAssessmentCategory()
 
-  def getFindings(self):
-    return self._assessmentCategoryCalculator.getFindings()
+  def getAssessmentCalculator(self):
+    return self._assessmentCategoryCalculator
 
   def addFinding(self, finding):
     self._assessmentCategoryCalculator.addFinding(finding)
@@ -164,10 +171,10 @@ class FindingsListModel(qt.QAbstractListModel):
   def data(self, index, role):
     if role != qt.Qt.DisplayRole:
       return None
-    return self._assessmentCategoryCalculator.getFindings()[index.row()].getName()
+    return self.findings[index.row()].getName()
 
   def _onFindingDataChanged(self, finding):
-    row = self._assessmentCategoryCalculator.getFindings().index(finding)
+    row = self.findings.index(finding)
     self.dataChanged(self.index(row, 0), self.index(row, 0))
 
 
@@ -265,11 +272,14 @@ class FindingInformationWidget(qt.QWidget):
   def _fillAnnotationTable(self):
     self._annotationListWidget.clear()
     for volume in self._volumeNodes:
+      seriesType = None
       try:
         seriesType = self._seriesTypes[volume]
       except KeyError:
-        seriesType = SeriesTypeFactory.getSeriesType(volume)(volume)
-        self._seriesTypes[volume] = seriesType
+        seriesTypeClass = SeriesTypeFactory.getSeriesType(volume)
+        if seriesTypeClass:
+          seriesType = seriesTypeClass(volume)
+          self._seriesTypes[volume] = seriesType
       if seriesType:
         listWidgetItem = qt.QListWidgetItem(self._annotationListWidget)
         self._annotationListWidget.addItem(listWidgetItem)

@@ -1,5 +1,3 @@
-
-
 import qt
 import os
 import slicer
@@ -156,9 +154,7 @@ class DataSelectionDialog(qt.QDialog):
     m = self._seriesTableModel
     uids = [m.data(m.index(row, 0)) for row in set([index.row() for index in indexes])]
 
-    # TODO: right now only expecting one report to be in the study
     qiicrxReportSeries = DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(uids)
-    # TODO: if list of eligible SRs is longer, get the most recent one!
 
     if qiicrxReportSeries:
       self._loadReport(qiicrxReportSeries)

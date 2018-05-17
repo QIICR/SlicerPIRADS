@@ -2,7 +2,31 @@ import qt
 import os
 import slicer
 
-class ProstateSectorMapDialog(object):
+
+class ScreenShotMixin(object):
+
+  SV_RECT = qt.QRect(260, 0, 240, 105)
+  BASE_RECT = qt.QRect(270, 105, 230, 165)
+  MID_RECT = qt.QRect(290, 280, 210, 165)
+  APEX_RECT = qt.QRect(310, 465, 190, 130)
+  UR_RECT = qt.QRect(355, 610, 145,65 )
+
+  REGIONS = {"Vesicle": SV_RECT, "Base": BASE_RECT, "Mid": MID_RECT, "Apex": APEX_RECT, "Urethra": UR_RECT}
+
+  def getScreenShots(self):
+    pixmaps = []
+    for rect in self.getRegionRectangles():
+      pixmap = qt.QPixmap(rect.size())
+      self.ui.render(pixmap, qt.QPoint(), qt.QRegion(rect))
+      pixmaps.append(pixmap)
+    return pixmaps
+
+  def getRegionRectangles(self):
+    selectedRegions = set([sector.split("_")[1] for sector in self.getSelectedSectors()])
+    return [self.REGIONS[selRegion] for selRegion in selectedRegions]
+
+
+class ProstateSectorMapDialog(ScreenShotMixin):
 
   def __init__(self):
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))

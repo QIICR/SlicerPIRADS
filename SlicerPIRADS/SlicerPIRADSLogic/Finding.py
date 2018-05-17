@@ -48,6 +48,8 @@ class Finding(ParameterNodeObservationMixin):
       annotation = self._annotations[seriesType][mrmlNodeClass]
       annotation.cleanup()
       del self._annotations[seriesType][mrmlNodeClass]
+      if not self._annotations[seriesType]:
+        del self._annotations[seriesType]
     except Exception:
       pass
 
@@ -100,6 +102,7 @@ class Finding(ParameterNodeObservationMixin):
 
   def getAssessmentScores(self):
     return self._assessmentScores
+
 
 class FindingAssessment(object):
   # TODO: make use of this class

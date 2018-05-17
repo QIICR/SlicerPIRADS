@@ -16,6 +16,7 @@ from SlicerDevelopmentToolboxUtils.constants import DICOMTAGS
 
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
+from SlicerPIRADSLogic.HTMLReportCreator import HTMLReportCreator
 from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
 from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
@@ -142,6 +143,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self._prostateMeasurementsWidget = ProstateWidget()
 
     self._findingsWidget = FindingsWidget(maximumNumber=4)
+    self._exportToHTMLButton = UICreationHelpers.createButton("Export to HTML")
     self.layout.addWidget(self._collapsibleLayoutButton)
     self._setupCollapsibleMultiVolumeExplorerButton()
     self.layout.addWidget(self._collapsibleMultiVolumeButton)
@@ -149,6 +151,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
     self.layout.addWidget(self._studyAssessmentWidget)
     self.layout.addWidget(self._prostateMeasurementsWidget)
     self.layout.addWidget(self._findingsWidget)
+    self.layout.addWidget(self._exportToHTMLButton)
     self._stepButtonGroup = qt.QButtonGroup()
     self._stepButtonGroup.addButton(self._patientAssessmentWidget, 1)
     self._stepButtonGroup.addButton(self._studyAssessmentWidget, 2)
@@ -190,7 +193,13 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def _setupConnections(self):
     self._loadDataButton.clicked.connect(self._onLoadButtonClicked)
+    self._exportToHTMLButton.clicked.connect(self._onExportToHTMLButtonClicked)
+
     self._multiVolumeExplorer.frameSlider.connect('valueChanged(double)', self.onSliderChanged)
+
+  def _onExportToHTMLButtonClicked(self):
+    creator = HTMLReportCreator(self._findingsWidget.getAssessmentCalculator())
+    creator.generateReport()
 
   def _setupCollapsibleMultiVolumeExplorerButton(self):
     self._collapsibleMultiVolumeButton = ctk.ctkCollapsibleButton()

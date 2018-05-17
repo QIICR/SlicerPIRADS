@@ -1,7 +1,7 @@
 import re
 
-from .SeriesType import *
-from .Constants import *
+from SlicerPIRADSLogic.SeriesType import *
+from SlicerPIRADSLogic.Constants import *
 
 from SlicerDevelopmentToolboxUtils.widgets import RadioButtonChoiceMessageBox
 
