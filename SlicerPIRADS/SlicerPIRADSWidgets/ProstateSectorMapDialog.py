@@ -59,6 +59,13 @@ class ProstateSectorMapDialog(ScreenShotMixin):
     for b in self._sectorButtonGroup.buttons():
       b.checked = False
 
+  def setButtonsVisible(self, checkedOnly=False):
+    for b in self._sectorButtonGroup.buttons():
+      b.visible = b.checked if checkedOnly else True
+
+  def displayCheckboxBorder(self, visible=True):
+    self.ui.setStyleSheet("" if visible else "QCheckBox{background:transparent;border:0}")
+
   def _onButtonClicked(self, button):
     if self._dialogButtonBox.buttonRole(button) == qt.QDialogButtonBox.ResetRole:
       self.resetButtons()

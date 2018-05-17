@@ -78,10 +78,12 @@ class HTMLReportCreator(object):
     data = ""
 
     prostateMap = ProstateSectorMapDialog()
+    prostateMap.displayCheckboxBorder(visible=False)
 
     for finding in self._assessmentCategory.getFindings():
       prostateMap.resetButtons()
       prostateMap.setSelectedSectors(finding.getSectors())
+      prostateMap.setButtonsVisible(checkedOnly=True)
 
       data += '''
         <div class="print-friendly">
