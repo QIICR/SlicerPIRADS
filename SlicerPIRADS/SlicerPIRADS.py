@@ -17,6 +17,7 @@ from SlicerDevelopmentToolboxUtils.constants import DICOMTAGS
 from SlicerPIRADSLogic.Configuration import SlicerPIRADSConfiguration
 from SlicerPIRADSLogic.HangingProtocol import HangingProtocolFactory
 from SlicerPIRADSLogic.HTMLReportCreator import HTMLReportCreator
+from SlicerPIRADSLogic.SeriesType import VolumeSeriesTypeSceneObserver
 from SlicerPIRADSWidgets.AssessmentWidget import AssessmentWidget
 from SlicerPIRADSWidgets.DataSelectionDialog import DataSelectionDialog
 from SlicerPIRADSWidgets.FindingsWidget import FindingsWidget
@@ -102,6 +103,7 @@ class SlicerPIRADSWidget(ScriptedLoadableModuleWidget, GeneralModuleMixin):
 
   def __init__(self, parent=None):
     ScriptedLoadableModuleWidget.__init__(self, parent)
+    VolumeSeriesTypeSceneObserver().refresh() # is a singleton and observes the mrmlScene
     self.modulePath = os.path.dirname(slicer.util.modulePath(self.moduleName))
     SlicerPIRADSConfiguration(self.moduleName, os.path.join(self.modulePath, 'Resources', "default.cfg"))
     self._loadedVolumeNodes = OrderedDict()

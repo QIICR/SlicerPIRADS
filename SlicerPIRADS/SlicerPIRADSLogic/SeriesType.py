@@ -2,6 +2,12 @@ from abc import ABCMeta
 import os
 import re
 import dicom
+import vtk
+import slicer
+from collections import OrderedDict
+
+from SlicerDevelopmentToolboxUtils.mixins import ParameterNodeObservationMixin
+from SlicerDevelopmentToolboxUtils.decorators import singleton
 
 
 class SeriesType(object):
@@ -136,3 +142,56 @@ class SeriesTypeFactory(object):
       if seriesTypeClass.canHandle(obj):
         return seriesTypeClass
     return None
+
+
+@singleton
+class VolumeSeriesTypeSceneObserver(ParameterNodeObservationMixin):
+  """ This class keeps track of all volume nodes that have been added to the mrmlScene classifying each one with a
+      a SeriesType if possible
+  """
+
+  @property
+  def volumeSeriesTypes(self):
+    return self._volumeSeriesTypes
+
+  def __init__(self):
+    self._volumeSeriesTypes = dict()
+    self._nodeAddedObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent,
+                                                           self._onVolumeNodeAdded)
+    self._nodeRemovedObserver = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeRemovedEvent,
+                                                             self._onVolumeNodeRemoved)
+
+  def __del__(self):
+    slicer.mrmlScene.RemoveObserver(self._nodeAddedObserver)
+    slicer.mrmlScene.RemoveObserver(self._nodeRemovedObserver)
+
+  def reset(self):
+    self._volumeSeriesTypes = dict()
+
+  def refresh(self):
+    loadedVolumeNodes = OrderedDict({volume: volume for volume
+                                     in slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')})
+    for volume in loadedVolumeNodes:
+      try:
+        self._volumeSeriesTypes[volume]
+      except KeyError:
+        seriesTypeClass = SeriesTypeFactory.getSeriesType(volume)
+        if seriesTypeClass:
+          seriesType = seriesTypeClass(volume)
+          self._volumeSeriesTypes[volume] = seriesType
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def _onVolumeNodeAdded(self, caller, event, callData):
+    if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
+      seriesTypeClass = SeriesTypeFactory.getSeriesType(callData)
+      if seriesTypeClass:
+        seriesType = seriesTypeClass(callData)
+        self._volumeSeriesTypes[callData] = seriesType
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def _onVolumeNodeRemoved(self, caller, event, callData):
+    if isinstance(callData, slicer.vtkMRMLScalarVolumeNode):
+      try:
+        del self._volumeSeriesTypes[callData]
+      except KeyError:
+        pass

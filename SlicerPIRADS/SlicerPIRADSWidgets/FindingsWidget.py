@@ -10,7 +10,7 @@ from SlicerDevelopmentToolboxUtils.icons import Icons
 from SlicerDevelopmentToolboxUtils.decorators import onExceptionReturnNone
 
 from SlicerPIRADSLogic.Finding import Finding
-from SlicerPIRADSLogic.SeriesType import SeriesTypeFactory
+from SlicerPIRADSLogic.SeriesType import VolumeSeriesTypeSceneObserver
 from SlicerPIRADSLogic.PIRADSAssessmentCategory import PIRADSAssessmentCategory
 from SlicerPIRADSWidgets.AnnotationWidget import AnnotationWidgetFactory, AnnotationItemWidget
 from SlicerPIRADSWidgets.ProstateSectorMapDialog import ProstateSectorMapDialog
@@ -198,7 +198,6 @@ class FindingInformationWidget(qt.QWidget):
     self._finding = finding
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
     self._volumeNodes = slicer.util.getNodesByClass('vtkMRMLScalarVolumeNode')
-    self._seriesTypes = dict()
     self.setup()
 
   def setFinding(self, finding):
@@ -272,15 +271,9 @@ class FindingInformationWidget(qt.QWidget):
   def _fillAnnotationTable(self):
     self._annotationListWidget.clear()
     for volume in self._volumeNodes:
-      seriesType = None
-      try:
-        seriesType = self._seriesTypes[volume]
-      except KeyError:
-        seriesTypeClass = SeriesTypeFactory.getSeriesType(volume)
-        if seriesTypeClass:
-          seriesType = seriesTypeClass(volume)
-          self._seriesTypes[volume] = seriesType
-      if seriesType:
+      volumeSeriesTypes = VolumeSeriesTypeSceneObserver().volumeSeriesTypes
+      if volumeSeriesTypes.has_key(volume):
+        seriesType = volumeSeriesTypes[volume]
         listWidgetItem = qt.QListWidgetItem(self._annotationListWidget)
         self._annotationListWidget.addItem(listWidgetItem)
         annotationItemWidget = AnnotationItemWidget(self._finding, seriesType)
