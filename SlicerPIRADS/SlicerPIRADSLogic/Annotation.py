@@ -111,6 +111,7 @@ class Ruler(Annotation):
       if isinstance(node, getattr(slicer, self.MRML_NODE_CLASS)):
         self.mrmlNode = node
         self._removeRulerObserver()
+        self.invokeEvent(self.AnnotationFinishedEvent)
 
     self._removeRulerObserver()
     self.rulerObserverTag = slicer.mrmlScene.AddObserver(slicer.vtkMRMLScene.NodeAddedEvent, onNodeAdded)
@@ -121,6 +122,8 @@ class Ruler(Annotation):
 
   def _onRulerModified(self, caller, event):
     self.invokeEvent(self.DataChangedEvent)
+
+  # TODO: add method for retrieving measurement
 
 
 class AnnotationFactory(object):

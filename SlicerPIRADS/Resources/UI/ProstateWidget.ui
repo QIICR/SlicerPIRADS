@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>492</width>
-    <height>242</height>
+    <width>364</width>
+    <height>171</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,22 +25,17 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
+  <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0" colspan="2">
+      <widget class="QLabel" name="instructionLabel">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
       <widget class="QListWidget" name="listWidget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -77,7 +72,7 @@
        </property>
       </widget>
      </item>
-     <item>
+     <item row="0" column="1">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QPushButton" name="addMeasurementButton">
@@ -94,7 +89,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../SlicerPIRADS.qrc">
+          <iconset>
            <normaloff>:/Icons/Add.png</normaloff>:/Icons/Add.png</iconset>
          </property>
         </widget>
@@ -114,9 +109,18 @@
        </item>
       </layout>
      </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
+  <zorder>gridLayoutWidget</zorder>
+  <zorder>addMeasurementButton</zorder>
  </widget>
  <resources>
   <include location="../SlicerPIRADS.qrc"/>

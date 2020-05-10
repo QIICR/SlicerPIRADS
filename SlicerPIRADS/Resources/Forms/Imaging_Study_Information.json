@@ -19,5 +19,5 @@
       ],
       "default": "no"
     }
-  }
+  }, "required": ["Endorectal coil used", "Magnet field strength"]
 }

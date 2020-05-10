@@ -1,11 +1,11 @@
 from collections import OrderedDict
 
 
-# PIRADS_SCORE = OrderedDict([(1, "very low (clinically significant cancer is highly unlikely to be present)"),
-#                             (2, "low (clinically significant cancer is unlikely to be present)"),
-#                             (3, "intermediate (the presence of clinically significant cancer is equivocal)"),
-#                             (4, "high (clinically significant cancer is likely to be present)"),
-#                             (5, "very high (clinically significant cancer is highly likely to be present)")])
+PIRADS_SCORE = OrderedDict([(1, "very low (clinically significant cancer is highly unlikely to be present)"),
+                            (2, "low (clinically significant cancer is unlikely to be present)"),
+                            (3, "intermediate (the presence of clinically significant cancer is equivocal)"),
+                            (4, "high (clinically significant cancer is likely to be present)"),
+                            (5, "very high (clinically significant cancer is highly likely to be present)")])
 
 PZ_T2_TOOLTIPS = OrderedDict([(1, "(uniform hyperintense signal)"),
                               (2, "(Linear, wedge-shaped, diffuse, or indistinct hypointensity)"),

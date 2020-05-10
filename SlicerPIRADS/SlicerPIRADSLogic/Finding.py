@@ -38,7 +38,7 @@ class Finding(ParameterNodeObservationMixin):
       volumeNode = seriesType.getVolume()
       annotation = AnnotationFactory.getAnnotationClassForMRMLNodeClass(mrmlNodeClass)(volumeNode)
       annotation.addEventObserver(self.DataChangedEvent, lambda caller, event: self.invokeEvent(event))
-      if not self._annotations.has_key(seriesType):
+      if not seriesType in self._annotations:
         self._annotations[seriesType] = dict()
       self._annotations[seriesType][mrmlNodeClass] = annotation
     return annotation

@@ -272,7 +272,7 @@ class FindingInformationWidget(qt.QWidget):
     self._annotationListWidget.clear()
     for volume in self._volumeNodes:
       volumeSeriesTypes = VolumeSeriesTypeSceneObserver().volumeSeriesTypes
-      if volumeSeriesTypes.has_key(volume):
+      if volume in volumeSeriesTypes:
         seriesType = volumeSeriesTypes[volume]
         listWidgetItem = qt.QListWidgetItem(self._annotationListWidget)
         self._annotationListWidget.addItem(listWidgetItem)

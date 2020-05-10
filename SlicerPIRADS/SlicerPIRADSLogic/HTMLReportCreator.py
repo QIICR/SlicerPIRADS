@@ -68,7 +68,7 @@ class HTMLReportCreator(object):
     if not os.path.exists(outputPath):
       ModuleLogicMixin.createDirectory(outputPath)
     outputHTML = os.path.join(outputPath, currentDateTime() + "_testReport.html")
-    print outputHTML
+    print(outputHTML)
     f = open(outputHTML, 'w')
     f.write(html)
     f.close()

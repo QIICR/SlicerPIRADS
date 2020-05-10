@@ -1,82 +1,8 @@
 @startuml
-left to right direction
 
 'TODO: think about loading and saving data!
 
-package SlicerPIRADSWidget {
-
-  class MultiVolumeExplorerWidget {
-  }
-
-  class PatientInfoWidget {
-  }
-
-  package Finding {
-    class FindingsWidget {
-      - __findingList
-      - __findingsInformationWidget
-      - __AnnotationToolWidget
-    }
-
-    class FindingsList {
-      + createFinding(): Finding
-      + addAssessment()
-    }
-
-    class AnnotationToolSelectionWidget {
-      - __annotationTools: list
-      + addAnnotationTool(AnnotationTool tool)
-      + getAnnotationTools(): list
-      + setActiveAnnotationTool(id): bool
-    }
-
-    class FindingInformationWidget {
-
-    }
-
-    class AnnotationToolWidget {
-    }
-  }
-
-  class DataSelectionDialog {
-    # _patientTable
-    # _studiesTable
-  }
-
-  '  Connections
-
-  package Assessment {
-
-    class AssessmentDialog {
-      + setAssessment(): Assessment
-    }
-    AssessmentDialog <|-- StudyAssessmentWidget
-    AssessmentDialog <|-- FindingAssessmentWidget
-  }
-
-}
-
-
 package SlicerPIRADSLogic {
-
-  package AssessmentLogic {
-    interface Assessment {
-      - __schema: string
-      - __data=None
-      .. setter ..
-      + loadSchema(fileName)
-      + loadData(string): bool
-      .. getter ..
-      + getSchema(): string
-      + getData(): string
-    }
-
-    class FindingAssessment {
-    }
-
-    class StudyAssessment {
-    }
-  }
 
   'interface DataHandler {
   '  + save()
@@ -90,20 +16,48 @@ package SlicerPIRADSLogic {
   '
   'Assessment -> DataHandler: has_a
 
+  class LesionAssessmentRule {
+  }
+
+  LesionAssessmentRule <|-- TZRule
+  LesionAssessmentRule <|-- PZRule
+  LesionAssessmentRule <|-- CZRule
+
+  class LesionAssessmentRuleFactory {
+    {static} getEligibleLesionAssessmentRule(sectors): LesionAssessmentRule
+  }
+
+  LesionAssessmentRuleFactory::getEligibleLesionAssessmentRule ..> LesionAssessmentRule: returns
+
 
   class Finding {
+    .. events ..
+    + DataChangedEvent
+    + RuleChangedEvent
+    .. members ..
+    # _name
+    # _assessmentRule: LesionAssessmentRule
+    # _sectors: list()
+    # _annotations: dict()
+    .. setters ..
+    + setName(str)
+    + setSectors(list)
+    + setAllVisible(bool)
+    + setSeriesTypeVisible(SeriesType, bool)
+    .. getters ..
+    + getName(): str
+    + getSectors(): list()
+    + getPickList(SeriesType): list()
+    + getPickListTooltip(SeriesType): str
     + getOrCreateAnnotation(seriesType, mrmlNodeClass): Annotation
+    .. other methods ..
+    + deleteAnnotation(seriesType, mrmlNodeClass)
   }
 
-  class Report {
-  - findings: Finding
-  - studyAssessment: StudyAssessment
-  __
-  + startReport(): bool
-  + closeReport(): bool
-  + saveReport(): bool
-  + loadReport(string jsonfilename): bool
-  }
+  LesionAssessmentRuleFactory::getEligibleLesionAssessmentRule <.. Finding::setSectors: calls
+  LesionAssessmentRule <-- Finding::_assessmentRule
+
+  Annotation "*" <.. "1" Finding::getOrCreateAnnotation: has
 
   class SeriesType {
   }
@@ -115,9 +69,6 @@ package SlicerPIRADSLogic {
   SeriesType <|-- DCE
   SeriesType <|-- DWIb
   SeriesType <|-- SUB
-
-  Annotation "1" ..> "1" SeriesType
-
 
   interface Annotation {
   # _masterVolume
@@ -135,32 +86,160 @@ package SlicerPIRADSLogic {
 }
 
 
-SlicerPIRADSWidget ..> Report: has_a
+package SlicerPIRADSWidgets {
+
+  class AssessmentWidget {
+    # _forms: list()
+    # _assessmentFormWidget: FormsDialog
+    + title
+    .. methods ..
+    + setup()
+    + getData(): dict()
+  }
+
+  ctk.ctkCollapsibleButton <|-- AssessmentWidget
+  SlicerDevelopmentToolboxUtils.mixins.GeneralModuleMixin <|-- AssessmentWidget
+  SlicerDevelopmentToolboxUtils.forms.FormsDialog <.. AssessmentWidget::_assessmentFormWidget
+
+  class ProstateWidget {
+    # _measurementsListWidget
+    + setup()
+
+  }
+  ctk.ctkCollapsibleButton <|-- ProstateWidget
+  SlicerDevelopmentToolboxUtils.mixins.GeneralModuleMixin <|-- ProstateWidget
+
+'    class ProstateMeasurementItemWidget {
+'
+'    }
+
+  class ProstateSectorMapDialog {
+    + getSelectedSectors(): list()
+    + setSelectedSectors(sectors)
+    + resetButtons()
+  }
+
+  class AnnotationItemWidget {
+    # _seriesType
+    # _finding
+    .. methods ..
+    + setup()
+    + getSeriesType(): SeriesType
+  }
+
+  SeriesType <.. AnnotationItemWidget::_seriesType
+
+  abstract class AnnotationToolWidget {
+     .. properties ..
+     + annotation
+     .. members ..
+     # _finding
+     # _seriesType
+     .. methods ..
+     + resetInteraction()
+     + setData(finding, seriesType)
+  }
+
+  SeriesType <.. AnnotationToolWidget::_seriesType
+
+  Annotation <-- AnnotationToolWidget::annotation
+
+  class CustomSegmentEditorWidget {
+  }
+
+  AnnotationToolWidget <|-- CustomSegmentEditorWidget
+  SegmentEditor.SegmentEditorWidget <|-- CustomSegmentEditorWidget
+
+  class AnnotationWidgetFactory {
+    + SUPPORTED_MRML_NODE_WIDGETS = [CustomSegmentEditorWidget]
+    + {static} getEligibleAnnotationWidgetClass(mrmlNode): AnnotationToolWidget
+  }
+
+  CustomSegmentEditorWidget <-- AnnotationWidgetFactory::SUPPORTED_MRML_NODE_WIDGETS
+
+  class FindingInformationWidget {
+    # _finding: Finding
+    # _volumeNodes: list
+    # _annotationListWidget
+    + setFinding(finding)
+    + setup()
+  }
+
+  Finding <.. FindingInformationWidget::_finding
+  AnnotationItemWidget "*" <.. "1" FindingInformationWidget::_annotationListWidget: has
+
+  class FindingsWidget {
+    # _prostateMapDialog: ProstateSectorMapDialog
+    # _findingsListView
+    # _findingsListModel
+    # _findingInformationWidget: FindingInformationWidget
+    + setup()
+
+  }
+
+  FindingsWidget::_findingInformationWidget ..> FindingInformationWidget: has
+  ProstateSectorMapDialog <..FindingsWidget::_prostateMapDialog
+
+  class FindingsListModel {
+  }
+
+  qt.QAbstractListModel <|-- FindingsListModel
+  FindingsListModel <-- FindingsWidget::_findingsListModel
+
+  class DataSelectionDialog {
+    # _patientTable
+    # _studiesTable
+  }
+}
+
+class SlicerPIRADSWidget {
+  .. properties ..
+    + loadedVolumeNodes
+  .. members ..
+  # _loadedVolumeNodes
+  # _patientWatchBox
+  # _patientAssessmentWidget
+  # _studyAssessmentWidget
+  # _prostateMeasurementsWidget
+  # _findingsWidget
+  # _dataSelectionDialog
+  .. methods ..
+  + updateGUIFromData()
+  + setup()
+}
+
+SlicerDevelopmentToolboxUtils.widgets.DICOMBasedInformationWatchBox <- SlicerPIRADSWidget::_patientWatchBox
+AssessmentWidget <-- SlicerPIRADSWidget::_patientAssessmentWidget
+AssessmentWidget <-- SlicerPIRADSWidget::_studyAssessmentWidget
+ProstateWidget <-- SlicerPIRADSWidget::_prostateMeasurementsWidget
+FindingsWidget <-- SlicerPIRADSWidget::_findingsWidget
+DataSelectionDialog <-- SlicerPIRADSWidget::_dataSelectionDialog
+SlicerDevelopmentToolboxUtils.mixins.GeneralModuleMixin <|-- SlicerPIRADSWidget
 
 'FindingAssessmentWidget ..> AssessmentHelp
 
-FindingAssessmentWidget ..> FindingAssessment:generated_from
-StudyAssessmentWidget ..> StudyAssessment:generated_from
-
-FindingsList "1" ..> "0..*" Finding:has/creates
-FindingsWidget ..> FindingInformationWidget: has
-FindingsWidget::_AnnotationToolWidget ..> AnnotationToolWidget: has
-FindingsWidget::__FindingsList ..> FindingsList: has
+'FindingAssessmentWidget ..> FindingAssessment:generated_from
+'StudyAssessmentWidget ..> StudyAssessment:generated_from
+'
+'FindingsList "1" ..> "0..*" Finding:has/creates
+'FindingsWidget ..> FindingInformationWidget: has
+'FindingsWidget::_AnnotationToolWidget ..> AnnotationToolWidget: has
+'FindingsWidget::__FindingsList ..> FindingsList: has
+'
+'FindingInformationWidget "1" .> "n" AnnotationToolSelectionWidget: has
+'
+'
+'Finding "1" *-- "1" FindingAssessment: has_a
+'Finding::_annotations "1" *-- "n" Annotation: has
+'
+'Report::findings "1" ..> "n" Finding
+'Report::studyAssessment "1" ..> "1" StudyAssessment
+'
+'Assessment <|-- FindingAssessment
+'Assessment <|-- StudyAssessment
 
 Annotation <|-- Fiducial
 Annotation <|-- Segmentation
 Annotation <|-- Ruler
-
-FindingInformationWidget "1" .> "n" AnnotationToolSelectionWidget: has
-
-
-Finding "1" *-- "1" FindingAssessment: has_a
-Finding::_annotations "1" *-- "n" Annotation: has
-
-Report::findings "1" ..> "n" Finding
-Report::studyAssessment "1" ..> "1" StudyAssessment
-
-Assessment <|-- FindingAssessment
-Assessment <|-- StudyAssessment
 
 @enduml

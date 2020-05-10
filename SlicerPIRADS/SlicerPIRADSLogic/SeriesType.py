@@ -16,7 +16,7 @@ class SeriesType(object):
 
   @classmethod
   def canHandle(cls, obj):
-    if type(obj) in [str, unicode]:
+    if type(obj) is str:
       assert os.path.exists(obj)
       return cls.canHandleFile(obj)
     else:

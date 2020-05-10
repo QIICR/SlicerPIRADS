@@ -48,15 +48,15 @@ class ProstateWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
   def _onActionTriggered(self, action):
     action.setEnabled(False)
-
+    print(action)
     # Depending on type
-    finding = Finding("Finding %s" % random.randint(0, 10))
-    self._findingsListModel.addFinding(finding)
-    self._measurementsListWidget.selectionModel().clear()
-    model = self._measurementsListWidget.model()
-    self._measurementsListWidget.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 0),
-                                                                  qt.QItemSelectionModel.Select)
-    self._updateButtons()
+    # finding = Finding("Finding %s" % random.randint(0, 10))
+    # self._findingsListModel.addFinding(finding)
+    # self._measurementsListWidget.selectionModel().clear()
+    # model = self._measurementsListWidget.model()
+    # self._measurementsListWidget.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 0),
+    #                                                               qt.QItemSelectionModel.Select)
+    # self._updateButtons()
 
   def _setupConnections(self):
     def setupConnections(funcName="connect"):
@@ -97,7 +97,7 @@ class ProstateWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
 
     self._updateButtons()
 
-  def _onAddFindingsButtonClicked(self):
+  def _onAddMeasurementButtonClicked(self):
     # TODO: findings assessment
     # TODO: add segmentation and enable editor
     listWidgetItem = qt.QListWidgetItem(self._measurementsListWidget)

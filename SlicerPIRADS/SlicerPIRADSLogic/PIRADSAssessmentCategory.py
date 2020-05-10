@@ -44,5 +44,5 @@ class PIRADSAssessmentCategory(object):
       return
     for finding in self._finding:
       assessmentScores = finding.getAssessmentScores()
-      print assessmentScores
+      print(assessmentScores)
       # TODO: calculate

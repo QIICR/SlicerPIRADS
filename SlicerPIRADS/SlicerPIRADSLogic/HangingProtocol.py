@@ -1,5 +1,6 @@
 from abc import ABCMeta
 import slicer
+from SlicerDevelopmentToolboxUtils.decorators import singleton
 
 from SlicerPIRADSLogic.SeriesType import *
 
@@ -48,3 +49,11 @@ class PIRADSHangingProtocolP3(HangingProtocol):
 
   SERIES_TYPES = [T2a, T2s, T2c, ADC, DWIb, SUB, DCE] # TODO: add , "curve"]
   LAYOUT = slicer.vtkMRMLLayoutNode.SlicerLayoutThreeByThreeSliceView
+
+
+@singleton
+class FocussedSliceWidget:
+
+  def __init__(self):
+    pass
+

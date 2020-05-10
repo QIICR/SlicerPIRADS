@@ -1,9 +1,10 @@
 import slicer
 import ctk
-import dicom
+import pydicom
 import os
 import json
 import logging
+from functools import cmp_to_key
 from datetime import datetime
 
 from DICOMLib import DICOMPlugin, DICOMLoadable
@@ -14,7 +15,6 @@ from SlicerPIRADSLogic.SeriesType import *
 from SlicerPIRADSLogic.Exception import StudyNotEligibleError
 
 from SlicerDevelopmentToolboxUtils.mixins import ModuleLogicMixin
-from SlicerDevelopmentToolboxUtils.decorators import multimethod
 
 
 class DICOMQIICRXMixin(ModuleLogicMixin):
@@ -71,28 +71,25 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, DICOMQIICRXMixin):
   @classmethod
   def isDicomTIDQIICRX(cls, fileName):
     if cls.getDICOMValue(fileName, cls.tags['modality']) == 'SR':
-      return DICOMQIICRXLoaderPluginClass.isQIICRX(dicom.read_file(fileName))
+      return DICOMQIICRXLoaderPluginClass.isQIICRX(pydicom.read_file(fileName))
     return False
 
   @staticmethod
-  @multimethod([str, unicode])
-  def getQIICRXReportSeries(study):
-    return DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(slicer.dicomDatabase.seriesForStudy(study))
-
-  @staticmethod
-  @multimethod([tuple, list])
-  def getQIICRXReportSeries(series):
-    eligible = []
-    for currentSeries in series:
-      if DICOMQIICRXLoaderPluginClass.isDicomTIDQIICRX(slicer.dicomDatabase.filesForSeries(currentSeries)[0]):
-        eligible.append(currentSeries)
-    return eligible
+  def getQIICRXReportSeries(inputData):
+    if type(inputData) is str:
+      return DICOMQIICRXLoaderPluginClass.getQIICRXReportSeries(slicer.dicomDatabase.seriesForStudy(inputData))
+    else:
+      eligible = []
+      for currentSeries in inputData:
+        if DICOMQIICRXLoaderPluginClass.isDicomTIDQIICRX(slicer.dicomDatabase.filesForSeries(currentSeries)[0]):
+          eligible.append(currentSeries)
+      return eligible
 
   def __init__(self):
     try:
       slicer.modules.qiicrxsr
     except AttributeError as exc:
-      raise AttributeError("{}\nMake sure to install extension DCMQI".format(exc.message))
+      raise (AttributeError("{}\nMake sure to install extension DCMQI".format(exc)))
 
     DICOMPlugin.__init__(self)
     self.loadType = "DICOM {}".format(self.TEMPLATE_ID)
@@ -108,14 +105,14 @@ class DICOMQIICRXLoaderPluginClass(DICOMPlugin, DICOMQIICRXMixin):
         loadables += loadablesForFiles
         self.cacheLoadables(files, loadablesForFiles)
 
-    loadables.sort(lambda x,y: self.seriesSorter(x,y))
+    loadables.sort(key=cmp_to_key(lambda x, y: self.seriesSorter(x, y)))
 
     return loadables
 
   def examineFiles(self, files):
     loadables = []
     for currentFile in files:
-      dataset = dicom.read_file(currentFile)
+      dataset = pydicom.read_file(currentFile)
 
       uid = self.getDICOMValue(dataset, "SOPInstanceUID")
       if uid == "":
@@ -193,7 +190,7 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
     try:
       slicer.modules.qiicrxsr
     except AttributeError as exc:
-      raise AttributeError("{}\nMake sure to install extension DCMQI".format(exc.message))
+      raise (AttributeError("{}\nMake sure to install extension DCMQI".format(exc)))
     self.tempDir = os.path.join(slicer.app.temporaryPath, "QIICRX", self.currentDateTime)
     self.modulePath = os.path.dirname(slicer.util.modulePath("SlicerPIRADS"))
 
@@ -206,7 +203,7 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
     Todo:
       add option to add predecessor
     """
-    if type(obj) in [str, unicode]:
+    if type(obj) is str:
       seriesUIDs = DICOMQIICRXLoaderPluginClass.getEligibleSeriesForStudy(obj)
       if not seriesUIDs:
         raise StudyNotEligibleError
@@ -246,16 +243,16 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
     data["compositeContext"], params["compositeContextDataDir"] = self._populateCompositeContext(seriesUIDs)
 
     seriesDirs = set(os.path.dirname(os.path.abspath(self.db.filesForSeries(series)[0])) for series in seriesUIDs)
+    params["imageLibraryDataDir"] = os.path.commonprefix(list(seriesDirs))
+
     for series in seriesUIDs:
       try:
-        data['imageLibrary'].append(self._createImageLibraryEntry(series, acqTypes, len(seriesDirs) > 1))
+        data['imageLibrary'].append(self._createImageLibraryEntry(series, acqTypes, params, len(seriesDirs) > 1))
       except ValueError as exc:
-        print exc
+        print(exc)
 
     if not data['imageLibrary']:
       raise ValueError("No eligible series has been found for PIRADS reading!")
-
-    params["imageLibraryDataDir"] = os.path.commonprefix(seriesDirs)
 
     if not os.path.exists(self.tempDir):
       ModuleLogicMixin.createDirectory(self.tempDir)
@@ -279,7 +276,7 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
       "InstanceNumber": "1",
     }
 
-  def _createImageLibraryEntry(self, series, acqTypes, organizedInDirectories):
+  def _createImageLibraryEntry(self, series, acqTypes, params, organizedInDirectories):
     data = dict()
     files = self.db.filesForSeries(series)
     seriesType = SeriesTypeFactory.getSeriesType(files[0])
@@ -288,7 +285,8 @@ class DICOMQIICRXGenerator(DICOMQIICRXMixin):
                        self.db.fileValue(files[0], self.tags['seriesDescription']))
     data['piradsSeriesType'] = acqTypes[seriesType.getName()]
     if organizedInDirectories:
-      data['inputDICOMDirectory'] = os.path.basename(os.path.dirname(files[0]))
+      commonDirectory = params["imageLibraryDataDir"]
+      data['inputDICOMDirectory'] = os.path.relpath(os.path.dirname(files[0]), commonDirectory)
     else:
       data['inputDICOMFiles'] = [os.path.basename(f) for f in files]
     return data

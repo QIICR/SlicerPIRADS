@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
 
 
@@ -10,7 +10,7 @@ class SlicerPIRADSConfiguration(GeneralModuleMixin):
     self.loadConfiguration()
 
   def loadConfiguration(self):
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(self.configFile)
 
     self.setSetting("Study_Assessment_Forms", config.get('Assessment Forms', 'study_schema_files'))

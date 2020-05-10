@@ -154,7 +154,7 @@ class AnnotationToolWidget:
 
 
 class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
-  """ CustomSegmentEditorWidget is a subclass from Slicer SegmentEditor displaying only most important UI components
+  """ CustomSegmentEditorWidget is a subclass of Slicer SegmentEditor displaying only most important UI components
 
     Params:
       parent(qt.QWidget): parent widget of the custom SegmentEditor
@@ -169,14 +169,19 @@ class CustomSegmentEditorWidget(AnnotationToolWidget, SegmentEditorWidget):
     SegmentEditorWidget.__init__(self, parent)
     self.setup()
 
+  def setupDeveloperSection(self):
+    return
+
+  def resourcePath(self, filename):
+    scriptedModulesPath = os.path.dirname(slicer.util.modulePath("CustomSegmentEditorWidget"))
+    return os.path.join(scriptedModulesPath, 'Resources', filename)
+
   def _updateFromData(self):
     self.editor.setSegmentationNode(self.annotation.mrmlNode)
 
   def setup(self):
     SegmentEditorWidget.setup(self)
     self.editor.setAutoShowMasterVolumeNode(False)
-    if self.developerMode:
-      self.reloadCollapsibleButton.hide()
     self.editor.switchToSegmentationsButtonVisible = False
     self.editor.segmentationNodeSelectorVisible = False
     self.editor.masterVolumeNodeSelectorVisible = False

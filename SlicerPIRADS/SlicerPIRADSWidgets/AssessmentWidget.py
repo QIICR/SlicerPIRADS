@@ -2,6 +2,7 @@ import qt
 import ctk
 import os
 import slicer
+import logging
 
 from SlicerDevelopmentToolboxUtils.forms.FormsDialog import FormsDialog
 from SlicerDevelopmentToolboxUtils.mixins import GeneralModuleMixin
@@ -52,6 +53,7 @@ class AssessmentWidget(ctk.ctkCollapsibleButton, GeneralModuleMixin):
       self._assessmentButton.icon = Icons.edit
       self._assessmentStatusLabel.setText("Assessment done")
       self._assessmentButton.setToolTip("Modify assessment")
+      logging.debug(self.getData())
 
   def getData(self):
     """ Return user entered data in form of a dictionary
