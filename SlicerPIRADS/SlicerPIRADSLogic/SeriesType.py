@@ -1,7 +1,7 @@
 from abc import ABCMeta
 import os
 import re
-import dicom
+import pydicom
 import vtk
 import slicer
 from collections import OrderedDict
@@ -31,7 +31,7 @@ class SeriesType(object):
   def canHandleFile(cls, filename):
     try:
       # TODO: if is imported in DICOMDatabase, use database mechanism for checking tag else use dicom
-      dataset = dicom.read_file(filename)
+      dataset = pydicom.read_file(filename)
       return cls.hasEligibleDescription(dataset.SeriesDescription.lower())
     except AttributeError:
       return False
